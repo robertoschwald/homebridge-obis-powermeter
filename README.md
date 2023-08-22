@@ -12,6 +12,10 @@
 
 This is a Homebridge plugin to read SML-Interface SmartMeter data. WORK IN PROGRESS
 
+
+Maybe we use https://github.com/Apollon77/smartmeter-obis to read the data. This will also support D0 protocols, later.
+
+
 This template should be used in conjunction with the [developer documentation](https://developers.homebridge.io/). A full list of all supported service types, and their characteristics is available on this site.
 
 ### Setup Development Environment
