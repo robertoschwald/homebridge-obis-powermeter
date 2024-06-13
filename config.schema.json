@@ -1,16 +1,37 @@
 {
-  "pluginAlias": "SmlHomebridgePlugin",
+  "pluginAlias": "SML",
   "pluginType": "platform",
   "singular": true,
+  "headerDisplay": "Homebridge plugin for SML / S0 Smart Meter end-consumer interface",
+  "footerDisplay": "",
   "schema": {
     "type": "object",
     "properties": {
-      "name": {
-        "title": "Name",
+      "serialPort": {
+        "title": "Serial Port",
+        "description": "Serial port connected to the SML / S0 interface.  E.g. '/dev/ttyUSB0'.",
         "type": "string",
-        "required": true,
-        "default": "Example Dynamic Platform"
+        "default": "/dev/ttyUSB0",
+        "required": true
       }
     }
+  },
+  "pollInterval": {
+    "title": "Poll interval (in seconds)",
+    "type": "number",
+    "required": true,
+    "default": 60,
+    "minimum": 1,
+    "maximum": 3600
+  },
+  "hidePowerConsumptionDevice": {
+    "title": "Hide Power Consumption sensor",
+    "default": false,
+    "type": "boolean"
+  },
+  "hidePowerReturnDevice": {
+    "title": "Hide Power Return sensor",
+    "default": false,
+    "type": "boolean"
   }
 }

@@ -1,10 +1,10 @@
 {
-  "private": true,
-  "displayName": "Homebridge SML",
   "name": "homebridge-sml",
+  "displayName": "Homebridge Power-Meter Power Consumption and Power Return",
   "version": "1.0.0",
-  "description": "Plugin to read SML/S0 powermeter devices.",
+  "description": "See current power consumption and power return in Homekit",
   "license": "Apache-2.0",
+  "author": "Robert Oschwald",
   "repository": {
     "type": "git",
     "url": "https://github.com/robertoschwald/homebridge-sml.git"
@@ -13,8 +13,8 @@
     "url": "https://github.com/robertoschwald/homebridge-sml/issues"
   },
   "engines": {
-    "node": "^18.17.0",
-    "homebridge": "^1.6.0"
+    "node": "^20||^18",
+    "homebridge": "^1.8.2"
   },
   "main": "dist/index.js",
   "scripts": {
@@ -24,18 +24,33 @@
     "prepublishOnly": "npm run lint && npm run build"
   },
   "keywords": [
-    "homebridge-plugin"
+    "homebridge-plugin",
+    "homebridge",
+    "sml",
+    "eco",
+    "power-consumption",
+    "power-return",
+    "solar",
+    "solar-panels",
+    "s0",
+    "d0",
+    "solar-yield"
   ],
   "devDependencies": {
-    "@types/node": "^18.16.20",
-    "@typescript-eslint/eslint-plugin": "^5.62.0",
-    "@typescript-eslint/parser": "^5.62.0",
-    "eslint": "^8.45.0",
-    "homebridge": "^1.6.0",
-    "nodemon": "^3.0.1",
-    "rimraf": "^3.0.2",
+    "@types/node": "^20.11.25",
+    "@typescript-eslint/eslint-plugin": "^5.59.8",
+    "@typescript-eslint/parser": "^5.59.8",
+    "eslint": "^8.57.0",
+    "homebridge": "^1.7.0",
+    "nodemon": "^2.0.22",
+    "rimraf": "^5.0.5",
     "ts-node": "^10.9.1",
-    "typescript": "^4.9.5",
-    "smartmeter-obis": "^3.0.2"
+    "typescript": "^4.9.5"
+  },
+  "dependencies": {
+    "axios": "^1.6.7",
+    "serialport": "^12.0.0",
+    "ws": "^8.17.0",
+    "smartmeter-obis": "^4.0.0"
   }
 }

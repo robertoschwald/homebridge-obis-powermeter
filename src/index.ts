@@ -1,11 +1,8 @@
+'use strict';
+
 import { API } from 'homebridge';
+import { HomebridgeSmlPowerConsumption } from './Platform';
 
-import { PLATFORM_NAME } from './settings';
-import { ExampleHomebridgePlatform } from './platform';
-
-/**
- * This method registers the platform with Homebridge
- */
 export = (api: API) => {
-  api.registerPlatform(PLATFORM_NAME, ExampleHomebridgePlatform);
+  api.registerPlatform('HomebridgeSmlPowerConsumption', HomebridgeSmlPowerConsumption);
 };
