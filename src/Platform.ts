@@ -36,7 +36,7 @@ import {
     Service,
     Characteristic,
 } from 'homebridge';
-import SmartMeterObis, {ObisOptions} from 'smartmeter-obis';
+import SmartMeterObis, {ObisMeasurement, ObisOptions} from 'smartmeter-obis';
 
 import {HomebridgeSmlPowerConsumptionAccessory, HomebridgeSmlDevice} from './PlatformTypes';
 import PowerConsumption from './Accessories/PowerConsumption';
@@ -82,29 +82,31 @@ export class HomebridgeSmlPowerConsumption implements DynamicPlatformPlugin {
     private async validateSerialPort(): Promise<boolean> {
         try {
             this.obisOptions.transportSerialPort = this.config.serialPort;
-            const smTransport = SmartMeterObis.init(this.obisOptions as ObisOptions, (error: Error, data) => {
+            const smTransport = SmartMeterObis.init(this.obisOptions as ObisOptions, (error: Error, data: {[p: string]: ObisMeasurement }): boolean => {
                 if (error) {
                     console.error('Error:', error);
                     return false;
                 }
                 const deviceData = {
-                    product_name: data['1-0:96.50.1*1'],
-                    product_type: data['1-0:96.50.1*1'],
-                    serial: data['1-0:96.1.0*255'],
-                    firmware_version: data['1-0:0.2.0*0'],
-                    api_version: data['1-0:0.2.0*0']
+                    product_name: data['1-0:96.50.1*1'].valueToString(),
+                    product_type: data['1-0:96.50.1*1'].valueToString(),
+                    serial: data['1-0:96.1.0*255'].valueToString(),
+                    firmware_version: data['1-0:0.2.0*0'].valueToString(),
+                    api_version: data['1-0:0.2.0*0'].valueToString()
                 }
 
                 this.device = deviceData as HomebridgeSmlDevice;
                 return true;
             });
+
             smTransport.process();
 
             if (!this.device) {
-                return false;
+                return Promise.resolve(false);
             }
+            return Promise.resolve(true);
         } catch (error) {
-            return false;
+            return Promise.resolve(true);
         }
     }
 
@@ -172,14 +174,14 @@ export class HomebridgeSmlPowerConsumption implements DynamicPlatformPlugin {
     }
 
     private async heartBeat() {
-        let activePowerConsumption: number;
+        let activePowerConsumption: number = 0;
         const smTransport = SmartMeterObis.init(this.obisOptions as ObisOptions, (error: Error, data) => {
             if (error) {
                 console.error('Error:', error);
                 return false;
             }
             try {
-                activePowerConsumption = data['1-0:16.7.0*255'] as number;
+                activePowerConsumption = Number(data['1-0:16.7.0*255'] as unknown);
             } catch (error) {
                 console.error('Cannot read or cast active power consumption. Error:', error);
                 return false;

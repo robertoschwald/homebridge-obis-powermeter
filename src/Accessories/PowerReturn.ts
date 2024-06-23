@@ -4,11 +4,15 @@ import {HomebridgeSmlPowerConsumptionAccessory, HomebridgeSmlDevice} from '../Pl
 export default class PowerReturn implements HomebridgeSmlPowerConsumptionAccessory {
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
-  private powerService: Service;
+  private powerService!: Service;
 
   constructor(public config: PlatformConfig, public readonly log: Logger, public readonly api: API, public accessory: PlatformAccessory, public device: HomebridgeSmlDevice) {
-    this.accessory.getService(this.Service.AccessoryInformation)
-      .setCharacteristic(this.Characteristic.Manufacturer, 'HomebridgeSml')
+    const service = this.accessory.getService(this.Service.AccessoryInformation);
+    if (!service) {
+      log.error('No service accessory provided');
+      return;
+    }
+    service.setCharacteristic(this.Characteristic.Manufacturer, 'HomebridgeSml')
       .setCharacteristic(this.Characteristic.Model, device.product_name)
       .setCharacteristic(this.Characteristic.SerialNumber, `${device.serial}-power-return`);
 
