@@ -1,5 +1,5 @@
 # Homebridge OBIS Powermeter 
-![OBIS Icon](doc/icon.svg)
+![OBIS Icon](doc/icon__.svg)
 
 Read values from SML/D0 OBIS smart meters and expose them to HomeKit as simple sensors, like ZPA, Landis+Gyr, Elster, Itron, and others.
 
