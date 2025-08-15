@@ -89,5 +89,15 @@ Project structure:
 - src/Accessories/PowerReturn.ts — export accessory (optional)
 - src/Accessories/VoltageSensor.ts — per-phase voltage accessories
 
+## Roadmap
+- [ ] Support D0 protocol (untested)
+- [ ] Add more OBIS sources (e.g. 1-0:31.7.0 for total active power)
+- [ ] Improve error handling and logging
+- [ ] Add unit tests for OBIS parsing and HomeKit integration
+- [ ] Add support for multiple meters (e.g. via multiple serial ports)
+- [ ] Support for Homebridge v2
+- [ ] Support for other transport protocols (TCP/IP, LocalFile, StdIn if needed)
+- [ ] Support of JsonEfrProtocol for EFR Smart Grid Hub devices (JSON)
+
 ## License
 Apache-2.0
