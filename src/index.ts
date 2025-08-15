@@ -1,7 +1,7 @@
 import { API } from 'homebridge';
 import { HomebridgeSmlPowerConsumption } from './Platform';
 
-const PLUGIN_NAME = 'homebridge-sml';
+const PLUGIN_NAME = 'homebridge-obis-powermeter';
 const PLATFORM_NAME = 'SML';
 
 export = (api: API) => {

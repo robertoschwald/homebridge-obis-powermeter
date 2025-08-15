@@ -1,16 +1,16 @@
 {
-  "name": "homebridge-sml",
-  "displayName": "Homebridge SML smartmeter",
+  "name": "homebridge-obis-powermeter",
+  "displayName": "Homebridge OBIS Powermeter",
   "version": "1.0.0",
-  "description": "Plugin for SML smartmeter devices to read power consumption and power return values supporting SML and D0 ASCII protocols",
+  "description": "Plugin for OBIS smart meter devices (SML/D0) to read power, energy, and voltages.",
   "license": "Apache-2.0",
   "author": "Robert Oschwald <robertoschwald@users.noreply.github.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robertoschwald/homebridge-sml.git"
+    "url": "https://github.com/robertoschwald/homebridge-obis-powermeter.git"
   },
   "bugs": {
-    "url": "https://github.com/robertoschwald/homebridge-sml/issues"
+    "url": "https://github.com/robertoschwald/homebridge-obis-powermeter/issues"
   },
   "engines": {
     "node": ">=20.0.0",
@@ -21,7 +21,7 @@
     "lint": "eslint src/**.ts",
     "watch": "npm run build && npm link && nodemon",
     "build": "rimraf ./dist && tsc",
-    "package": "npm run build && npm run lint && node -p \"'homebridge-sml-' + require('./package.json').version + '.zip'\" | xargs -I {} zip -r {} dist/ package.json README.md LICENSE config.schema.json",
+    "package": "npm run build && node -p \"'homebridge-obis-powermeter-' + require('./package.json').version + '.zip'\" | xargs -I {} zip -r {} dist/ package.json README.md LICENSE config.schema.json",
     "prepublishOnly": "npm run lint && npm run build",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -30,6 +30,7 @@
   "keywords": [
     "homebridge-plugin",
     "homebridge",
+    "obis",
     "sml",
     "eco",
     "power-consumption",

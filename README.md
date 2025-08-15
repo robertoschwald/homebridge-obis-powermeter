@@ -1,6 +1,7 @@
-# Homebridge SML Smart Meter
+# Homebridge OBIS Powermeter 
+![OBIS Icon](doc/icon.svg)
 
-Read values from SML/D0 smart meters and expose them to HomeKit as simple sensors.
+Read values from SML/D0 OBIS smart meters and expose them to HomeKit as simple sensors, like ZPA, Landis+Gyr, Elster, Itron, and others.
 
 ![Supported devices and wiring](doc/devices.jpeg)
 
@@ -9,7 +10,7 @@ Read values from SML/D0 smart meters and expose them to HomeKit as simple sensor
 - Voltage L1/L2/L3: per‑phase voltages (V)
 - Energy Import (Total, kWh): cumulative imported energy
 
-Tested with EHz SML meter. Feedback for other models (Landis+Gyr, Elster, Itron, …) is welcome.
+Tested with ZPA power meter. Feedback for other models (Landis+Gyr, Elster, Itron, …) is welcome.
 D0 should theoretically work, but is currently untested — please report issues if you try it.
 
 ## Requirements
@@ -19,7 +20,7 @@ D0 should theoretically work, but is currently untested — please report issues
 
 ## Install
 ```bash
-npm i -g homebridge-sml
+npm i -g homebridge-obis-powermeter
 ```
 
 ## Configure

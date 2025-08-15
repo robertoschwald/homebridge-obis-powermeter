@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" role="img" aria-labelledby="title desc">
+    <title>OBIS Powermeter (Abstract)</title>
+    <desc>Minimal, abstract power meter: rounded background, simple meter silhouette, and a clean digital display.
+    </desc>
+
+    <!-- Background -->
+    <rect x="0" y="0" width="100" height="100" rx="12" ry="12" fill="#f0f4f8"/>
+
+    <!-- Meter body -->
+    <rect x="18" y="20" width="64" height="60" rx="10" ry="10" fill="#ffffff" stroke="#1f2937" stroke-width="2"/>
+
+    <!-- Display bezel -->
+    <rect x="24" y="30" width="52" height="24" rx="6" ry="6" fill="#e8eef7" stroke="#1f2937" stroke-width="2"/>
+
+    <!-- Digital display (abstract bars) -->
+    <rect x="28" y="34" width="44" height="16" rx="3" ry="3" fill="#1f2937"/>
+    <g fill="#aecdff">
+        <!-- Four simplified digits as bars (no text) -->
+        <rect x="32" y="38" width="6" height="8" rx="1.5"/>
+        <rect x="42" y="38" width="6" height="8" rx="1.5"/>
+        <rect x="52" y="38" width="6" height="8" rx="1.5"/>
+        <rect x="62" y="38" width="6" height="8" rx="1.5"/>
+    </g>
+
+    <!-- Subtle divider -->
+    <line x1="24" y1="58" x2="76" y2="58" stroke="#1f2937" stroke-width="2" stroke-linecap="round" opacity="0.25"/>
+
+    <!-- "OBIS" text" -->
+    <text x="40" y="73" font-family="Arial, sans-serif" font-size="10" fill="#1f2937" text-anchor="middle">
+        OBIS
+    </text>
+
+    <!-- Optische D0-Schnittstelle -->
+    <g>
+        <circle cx="68" cy="69" r="5" fill="#fef9c3" stroke="#1f2937" stroke-width="2"/>
+        <circle cx="68" cy="69" r="2" fill="#1f2937"/>
+    </g>
+
+    <!-- "SMART" text" -->
+    <text x="50" y="90" font-family="Arial, sans-serif" font-size="7" fill="#1f2937" text-anchor="middle">
+        SMARTMETER
+    </text>
+</svg>
