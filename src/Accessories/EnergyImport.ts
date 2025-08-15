@@ -1,14 +1,14 @@
 import { API, Logger, PlatformAccessory, PlatformConfig } from 'homebridge';
 import type { ObisMeasurement } from 'smartmeter-obis';
-import { HomebridgeSmlDataAccessory, HomebridgeSmlDevice } from '../PlatformTypes';
+import { HomebridgeObisDataAccessory, HomebridgeObisDevice } from '../PlatformTypes';
 
-export default class EnergyImport implements HomebridgeSmlDataAccessory {
+export default class EnergyImport implements HomebridgeObisDataAccessory {
   public Service: any;
   public Characteristic: any;
   private svc: any;
   private readonly obisKeys = ['1-0:1.8.0*255', '1-0:1.8.0'];
 
-  constructor(_config: PlatformConfig, public readonly log: Logger, public readonly api: API, public accessory: PlatformAccessory, public device: HomebridgeSmlDevice) {
+  constructor(_config: PlatformConfig, public readonly log: Logger, public readonly api: API, public accessory: PlatformAccessory, public device: HomebridgeObisDevice) {
     this.Service = this.api.hap.Service;
     this.Characteristic = this.api.hap.Characteristic;
 

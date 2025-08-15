@@ -54,7 +54,7 @@ Notes:
 - Power Return is hidden by default. Set hidePowerReturnDevice to false to show it.
 - Voltage sensors (L1/L2/L3) are always enabled.
 - protocol can be SmlProtocol (default) or D0Protocol.
-- You can also set SML_DEBUG=0|1|2 in the child bridge environment for extra logs.
+- You can also set OBIS_DEBUG=0|1|2 in the child bridge environment for extra logs.
 
 ## What values are shown?
 The plugin computes net active power (in watts) from your meter and feeds it to both accessories. Power Consumption displays it when > 0 (import). Power Return displays the absolute value when net < 0 (export).
@@ -84,7 +84,7 @@ Apple’s Home app heavily rounds Light Sensor values at higher magnitudes. For 
 - Serial device not found: verify the serialPort path (prefer /dev/serial/by-id on Linux) and permissions.
 - No readings / timeouts: confirm protocol matches your meter; try increasing pollInterval; check logs.
 - D0 meters: you may need different baud rate/parity according to your device.
-- Debugging: set debugLevel to 1 or 2 or use SML_DEBUG env var on the child bridge.
+- Debugging: set debugLevel to 1 or 2 or use OBIS_DEBUG env var on the child bridge.
 - Icon looks wrong: remove cached accessories in Homebridge UI and restart Homebridge.
 
 ## Development
