@@ -41,6 +41,7 @@ import PowerConsumption from './Accessories/PowerConsumption';
 import PowerReturn from './Accessories/PowerReturn';
 import VoltageSensor from './Accessories/VoltageSensor';
 import type { HomebridgeSmlDataAccessory } from './PlatformTypes';
+import EnergyImport from './Accessories/EnergyImport';
 
 interface PluginConfig extends PlatformConfig {
     pollInterval?: number;
@@ -323,6 +324,19 @@ export class HomebridgeSmlPowerConsumption implements DynamicPlatformPlugin {
       }
     } else if (powerReturnExistingAccessory) {
       this.api.unregisterPlatformAccessories(this.REGISTER_PLUGIN_NAME, this.PLATFORM_NAME, [powerReturnExistingAccessory]);
+    }
+
+    // Energy Import (Total, kWh)
+    const eImpName = 'Energy Import (Total, kWh)';
+    const eImpUuid = this.api.hap.uuid.generate(`${this.UUID_NAMESPACE}:energy-import`);
+    const eImpExisting = this.accessories.find(a => a.UUID === eImpUuid);
+    if (eImpExisting) {
+      this.dataDevices.push(new EnergyImport(this.config, this.log, this.api, eImpExisting, this.device!));
+    } else {
+      this.log.info(`${eImpName} added as accessory`);
+      const accessory = new this.api.platformAccessory(eImpName, eImpUuid);
+      this.dataDevices.push(new EnergyImport(this.config, this.log, this.api, accessory, this.device!));
+      this.api.registerPlatformAccessories(this.REGISTER_PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
     }
 
     // Voltage L1
