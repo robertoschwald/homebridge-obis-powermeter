@@ -1,12 +1,15 @@
-import {API, Characteristic, CharacteristicValue, Logger, PlatformAccessory, PlatformConfig, Service} from 'homebridge';
+import {API, Logger, PlatformAccessory, PlatformConfig} from 'homebridge';
 import {HomebridgeSmlDevice, HomebridgeSmlPowerConsumptionAccessory} from '../PlatformTypes';
 
 export default class PowerConsumption implements HomebridgeSmlPowerConsumptionAccessory {
-    public readonly Service: typeof Service = this.api.hap.Service;
-    public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
-    private readonly powerService!: Service;
+    public Service: any;
+    public Characteristic: any;
+    private powerService: any;
 
-    constructor(public config: PlatformConfig, public readonly log: Logger, public readonly api: API, public accessory: PlatformAccessory, public device: HomebridgeSmlDevice) {
+    constructor(_config: PlatformConfig, public readonly log: Logger, public readonly api: API, public accessory: PlatformAccessory, public device: HomebridgeSmlDevice) {
+        this.Service = this.api.hap.Service;
+        this.Characteristic = this.api.hap.Characteristic;
+
         if (!accessory) {
             log.error('No accessory provided');
             return;

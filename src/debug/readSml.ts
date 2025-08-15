@@ -1,4 +1,5 @@
 #!javascript
+
 // Example program to read SML data from serial port
 // node readSml.js
 

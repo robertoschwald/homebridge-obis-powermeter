@@ -9,29 +9,82 @@
     "properties": {
       "serialPort": {
         "title": "Serial Port",
-        "description": "Serial port connected to the SML / S0 interface.  E.g. '/dev/ttyUSB0'.",
+        "description": "Serial port connected to the SML / S0 interface. E.g. '/dev/ttyUSB0' or a stable /dev/serial/by-id path.",
         "type": "string",
-        "default": "/dev/ttyUSB0",
-        "required": true
+        "default": "/dev/ttyUSB0"
+      },
+      "protocol": {
+        "title": "Protocol",
+        "description": "Protocol parser to use for your meter (SmlProtocol or D0Protocol).",
+        "type": "string",
+        "default": "SmlProtocol",
+        "oneOf": [
+          { "title": "SML", "const": "SmlProtocol" },
+          { "title": "D0 / IEC 62056-21", "const": "D0Protocol" }
+        ]
+      },
+      "serialBaudRate": {
+        "title": "Baud rate",
+        "type": "number",
+        "default": 9600
+      },
+      "serialDataBits": {
+        "title": "Data bits",
+        "type": "number",
+        "default": 8,
+        "oneOf": [
+          { "title": "5", "const": 5 },
+          { "title": "6", "const": 6 },
+          { "title": "7", "const": 7 },
+          { "title": "8", "const": 8 }
+        ]
+      },
+      "serialStopBits": {
+        "title": "Stop bits",
+        "type": "number",
+        "default": 1,
+        "oneOf": [
+          { "title": "1", "const": 1 },
+          { "title": "2", "const": 2 }
+        ]
+      },
+      "serialParity": {
+        "title": "Parity",
+        "type": "string",
+        "default": "none",
+        "oneOf": [
+          { "title": "None", "const": "none" },
+          { "title": "Even", "const": "even" },
+          { "title": "Odd", "const": "odd" }
+        ]
+      },
+      "pollInterval": {
+        "title": "Poll interval (seconds)",
+        "type": "number",
+        "default": 60,
+        "minimum": 1,
+        "maximum": 3600
+      },
+      "hidePowerConsumptionDevice": {
+        "title": "Hide Power Consumption sensor",
+        "type": "boolean",
+        "default": false
+      },
+      "hidePowerReturnDevice": {
+        "title": "Hide Power Return sensor",
+        "description": "Hidden by default. Set to false to show the Power Return accessory.",
+        "type": "boolean",
+        "default": true
+      },
+      "debugLevel": {
+        "title": "Debug level",
+        "description": "Verbosity for smartmeter-obis logging (0=off, 1=info, 2=verbose). You can also set SML_DEBUG environment variable on the child bridge.",
+        "type": "number",
+        "default": 0,
+        "minimum": 0,
+        "maximum": 2
       }
-    }
-  },
-  "pollInterval": {
-    "title": "Poll interval (in seconds)",
-    "type": "number",
-    "required": true,
-    "default": 60,
-    "minimum": 1,
-    "maximum": 3600
-  },
-  "hidePowerConsumptionDevice": {
-    "title": "Hide Power Consumption sensor",
-    "default": false,
-    "type": "boolean"
-  },
-  "hidePowerReturnDevice": {
-    "title": "Hide Power Return sensor",
-    "default": false,
-    "type": "boolean"
+    },
+    "required": ["serialPort"]
   }
 }
