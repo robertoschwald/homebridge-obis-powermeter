@@ -1,161 +1,93 @@
-<p>
-<img src="https://raw.githubusercontent.com/homebridge/branding/latest/logos/homebridge-wordmark-logo-vertical.png" width="150">
-</p>
+# Homebridge SML Smart Meter
 
-<span align="center">
+Read real-time active power from SML/D0 smart meters and expose it to HomeKit as simple sensors.
 
-# Homebridge Plugin for SML SmartMeter devices. NOT WORKING, YET
+- Power Consumption: shows net import power (W)
+- Power Return (optional): shows export power (W). Hidden by default.
+- Voltage L1/L2/L3: shows per-phase voltages (V).
 
-</span>
+Powered by smartmeter-obis (SML and D0 protocols).
 
-This is a Homebridge plugin to read SML-Interface (Infrared) SmartMeter data. WORK IN PROGRESS
+D0 should theoretically work, but is completely untested. If you have a D0 meter, please try it out and report any issues.
 
+## Requirements
+- Node.js >= 20
+- Homebridge >= 1.8
+- A supported SML/D0 interface on your meter (e.g. IR head via USB)
 
-Uses https://github.com/Apollon77/smartmeter-obis to read the Smart Meter data. This will also support D0 protocols, later.
-
-
-### Setup Development Environment
-
-- Node.js 18 or later installed, and a modern code editor such as [VS Code](https://code.visualstudio.com/). This plugin template uses [TypeScript](https://www.typescriptlang.org/) to make development easier and comes with pre-configured settings for [VS Code](https://code.visualstudio.com/) and ESLint. If you are using VS Code install these extensions:
-
-- [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
-
-### Install Development Dependencies
-
-Using a terminal, navigate to the project folder and run this command to install the development dependencies:
-
-```shell
-$ npm install
+## Install
+```bash
+npm i -g homebridge-sml
 ```
 
+## Configure
+Use Homebridge UI (recommended) or edit config.json. Platform name is SML.
 
-### Build Plugin
-
-TypeScript needs to be compiled into JavaScript before it can run. The following command will compile the contents of your [`src`](./lib) directory and put the resulting code into the `dist` folder.
-
-```shell
-$ npm run build
-```
-
-### Link To Homebridge
-
-Run this command so your global installation of Homebridge can discover the plugin in your development environment:
-
-```shell
-$ npm link
-```
-
-You can now start Homebridge, use the `-D` flag, so you can see debug log messages in your plugin:
-
-```shell
-$ homebridge -D
-```
-
-### Watch For Changes and Build Automatically
-
-If you want to have your code compile automatically as you make changes, and restart Homebridge automatically between changes, you first need to add your plugin as a platform in `~/.homebridge/config.json`:
-```
+Minimal example:
+```json
 {
-...
-    "platforms": [
-        {
-            "name": "Config",
-            "port": 8581,
-            "platform": "config"
-        },
-        {
-            "name": "homebridge-sml",
-            //... any other options, as listed in config.schema.json ...
-            "platform": "<PLATFORM_NAME>"
-        }
-    ]
+  "platform": "SML",
+  "serialPort": "/dev/ttyUSB0"
 }
 ```
 
-and then you can run:
-
-```shell
-$ npm run watch
+Full example with options:
+```json
+{
+  "platform": "SML",
+  "serialPort": "/dev/ttyUSB0",
+  "protocol": "SmlProtocol",
+  "serialBaudRate": 9600,
+  "serialDataBits": 8,
+  "serialStopBits": 1,
+  "serialParity": "none",
+  "pollInterval": 60,
+  "hidePowerConsumptionDevice": false,
+  "hidePowerReturnDevice": true,
+  "debugLevel": 0
+}
 ```
+Notes:
+- Power Return is hidden by default. Set hidePowerReturnDevice to false to show it.
+- Voltage sensors (L1/L2/L3) are always enabled.
+- protocol can be SmlProtocol (default) or D0Protocol.
+- You can also set SML_DEBUG=0|1|2 in the child bridge environment for extra logs.
 
-This will launch an instance of Homebridge in debug mode which will restart every time you make a change to the source code. It will load the config stored in the default location under `~/.homebridge`. You may need to stop other running instances of Homebridge while using this command to prevent conflicts. You can adjust the Homebridge startup command in the [`nodemon.json`](./nodemon.json) file.
+## What values are shown?
+The plugin computes net active power (in watts) from your meter and feeds it to both accessories. Power Consumption displays it when > 0 (import). Power Return displays the absolute value when net < 0 (export).
 
-### Customise Plugin
+Priority of OBIS sources (first available wins):
+1) 1-0:16.7.0 (or 1-0:16.7.0*255) — total instantaneous active power
+2) 1-0:1.7.0 (import) minus 1-0:2.7.0 (export)
+3) Sum of per-phase import (21.7.0/41.7.0/61.7.0) minus export (22.7.0/42.7.0/62.7.0)
+4) Sum of 36.7.0/56.7.0/76.7.0 as a fallback
 
-You can now start customizing the plugin template to suit your requirements.
+Voltage sensors map directly to:
+- L1: 1-0:32.7.0*255
+- L2: 1-0:52.7.0*255
+- L3: 1-0:72.7.0*255
 
-- [`src/SmlPlatform.ts`](lib/platform.ts) - this is where your device setup and discovery should go.
-- [`src/platformAccessory.ts`](lib/platformAccessory.ts) - this is where your accessory control logic should go, you can rename or create multiple instances of this file for each accessory type you need to implement as part of your platform plugin. You can refer to the [developer documentation](https://developers.homebridge.io/) to see what characteristics you need to implement for each service type.
-- [`config.schema.json`](./config.schema.json) - update the config schema to match the config you expect from the user. See the [Plugin Config Schema Documentation](https://developers.homebridge.io/#/config-schema).
+Units: kW -> W for power, kV -> V for voltage; otherwise values are used as-is.
 
-### Versioning Your Plugin
+HomeKit service used: CurrentAmbientLightLevel (Light Sensor). Values are always >= 0.0001 as required by HomeKit. Accessories are categorized as SENSOR to avoid bulb icons in some clients.
 
-Given a version number `MAJOR`.`MINOR`.`PATCH`, such as `1.4.3`, increment the:
+## Troubleshooting
+- Serial device not found: verify the serialPort path (prefer /dev/serial/by-id on Linux) and permissions.
+- No readings / timeouts: confirm protocol matches your meter; try increasing pollInterval; check logs.
+- D0 meters: you may need different baud rate/parity according to your device.
+- Debugging: set debugLevel to 1 or 2 or use SML_DEBUG env var on the child bridge.
+- Icon looks wrong: remove cached accessories in Homebridge UI and restart Homebridge.
 
-1. **MAJOR** version when you make breaking changes to your plugin,
-2. **MINOR** version when you add functionality in a backwards compatible manner, and
-3. **PATCH** version when you make backwards compatible bug fixes.
+## Development
+- Build: `npm run build`
+- Watch & link for Homebridge dev: `npm run watch`
+- Tests: `npm test`
 
-You can use the `npm version` command to help you with this:
+Project structure:
+- src/Platform.ts — platform and meter reading
+- src/Accessories/PowerConsumption.ts — consumption accessory
+- src/Accessories/PowerReturn.ts — export accessory (optional)
+- src/Accessories/VoltageSensor.ts — per-phase voltage accessories
 
-```shell
-# major update / breaking changes
-$ npm version major
-
-# minor update / new features
-$ npm version update
-
-# patch / bugfixes
-$ npm version patch
-```
-
-
-### Publishing
-
-When you are ready to publish the plugin you should set `private` to false, or remove the attribute entirely.
-
-```shell
-$ npm publish
-```
-
-If you are publishing a scoped plugin, i.e. `@username/homebridge-xxx` you will need to add `--access=public` to command the first time you publish.
-
-### Publishing Beta Versions
-
-You can publish *beta* versions of your plugin for other users to test before you release it to everyone.
-
-```shell
-# create a new pre-release version (eg. 2.1.0-beta.1)
-$ npm version prepatch --preid beta
-
-# publish to @beta
-$ npm publish --tag=beta
-```
-
-Users can then install the  *beta* version by appending `@beta` to the install command, for example:
-
-```shell
-$ sudo npm install -g homebridge-sml@beta
-```
-
-### Best Practices
-Consider creating your plugin with the [Homebridge Verified](https://github.com/homebridge/verified) criteria in mind. This will help you to create a plugin that is easy to use and works well with Homebridge.
-You can then submit your plugin to the Homebridge Verified list for review.
-The most up-to-date criteria can be found [here](https://github.com/homebridge/verified#requirements).
-For reference, the current criteria are:
-
-- The plugin must successfully install.
-- The plugin must implement the [Homebridge Plugin Settings GUI](https://github.com/oznu/homebridge-config-ui-x/wiki/Developers:-Plugin-Settings-GUI).
-- The plugin must not start unless it is configured.
-- The plugin must not execute post-install scripts that modify the users' system in any way.
-- The plugin must not contain any analytics or calls that enable you to track the user.
-- The plugin must not throw unhandled exceptions, the plugin must catch and log its own errors.
-- The plugin must be published to npm and the source code available on GitHub.
-  - A GitHub release - with patch notes - should be created for every new version of your plugin.
-- The plugin must run on all [supported LTS versions of Node.js](https://github.com/homebridge/homebridge/wiki/How-To-Update-Node.js), at the time of writing this is Node.js v16, v18 and v20.
-- The plugin must not require the user to run Homebridge in a TTY or with non-standard startup parameters, even for initial configuration.
-- If the plugin needs to write files to disk (cache, keys, etc.), it must store them inside the Homebridge storage directory.
-
-### Useful Links
-Note these links are here for help but are not supported/verified by the Homebridge team
-- [Custom Characteristics](https://github.com/homebridge/homebridge-plugin-template/issues/20)
+## License
+Apache-2.0
