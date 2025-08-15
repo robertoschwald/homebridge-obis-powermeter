@@ -59,14 +59,14 @@ describe('HomebridgeSmlPowerConsumption', () => {
         const result = await (platform as any).validateSerialPort();
         expect(result).toBe(false);
         expect((log.error as any)).toHaveBeenCalledWith(
-            expect.stringContaining("Failed to open serial port"),
+            expect.stringContaining('Failed to open serial port'),
         );
     });
 
     it('initializes with valid configuration', async () => {
         jest.spyOn(platform as any, 'validateConfig').mockReturnValue(true);
         jest.spyOn(platform as any, 'validateSerialPort').mockResolvedValue(true);
-        jest.spyOn(platform as any, 'setupAccessoires').mockImplementation(() => {});
+        jest.spyOn(platform as any, 'setupAccessoires').mockImplementation(() => undefined);
         jest.spyOn(platform as any, 'heartBeat').mockResolvedValue(undefined);
 
         await (platform as any).initialize();
@@ -93,7 +93,7 @@ describe('HomebridgeSmlPowerConsumption', () => {
         await (platform as any).initialize();
 
         expect(log.error).toHaveBeenCalledWith(
-            "Your Power‑meter's Serial Port seems to be incorrect. No connection possible.",
+            'Your Power‑meter\'s Serial Port seems to be incorrect. No connection possible.',
         );
     });
 });

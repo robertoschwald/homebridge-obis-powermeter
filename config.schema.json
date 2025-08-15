@@ -1,15 +1,15 @@
 {
-  "pluginAlias": "SML",
+  "pluginAlias": "OBIS",
   "pluginType": "platform",
   "singular": true,
-  "headerDisplay": "Homebridge plugin for SML / S0 Smart Meter end-consumer interface",
+  "headerDisplay": "Homebridge plugin for OBIS smart meters (SML / D0)",
   "footerDisplay": "",
   "schema": {
     "type": "object",
     "properties": {
       "serialPort": {
         "title": "Serial Port",
-        "description": "Serial port connected to the SML / S0 interface. E.g. '/dev/ttyUSB0' or a stable /dev/serial/by-id path.",
+        "description": "Serial port connected to the OBIS (SML/D0) interface. E.g. '/dev/ttyUSB0' or a stable /dev/serial/by-id path.",
         "type": "string",
         "default": "/dev/ttyUSB0"
       },
@@ -78,7 +78,7 @@
       },
       "debugLevel": {
         "title": "Debug level",
-        "description": "Verbosity for smartmeter-obis logging (0=off, 1=info, 2=verbose). You can also set SML_DEBUG environment variable on the child bridge.",
+        "description": "Verbosity for smartmeter-obis logging (0=off, 1=info, 2=verbose). You can also set OBIS_DEBUG environment variable on the child bridge.",
         "type": "number",
         "default": 0,
         "minimum": 0,
