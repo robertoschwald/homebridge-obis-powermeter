@@ -64,7 +64,7 @@ export class HomebridgeSmlPowerConsumption implements DynamicPlatformPlugin {
   public readonly accessories: PlatformAccessory[] = [];
 
   private readonly heartBeatInterval: number;
-  private readonly REGISTER_PLUGIN_NAME = 'homebridge-sml';
+  private readonly REGISTER_PLUGIN_NAME = 'homebridge-obis-powermeter';
   private readonly PLATFORM_NAME = 'SML';
   private readonly UUID_NAMESPACE = 'homebridge-sml-power-consumption';
 
