@@ -10,6 +10,9 @@ export default class PowerReturn implements HomebridgeSmlPowerConsumptionAccesso
     this.Service = this.api.hap.Service;
     this.Characteristic = this.api.hap.Characteristic;
 
+    // ensure HomeKit category is SENSOR (prevents light-bulb rendering in some clients)
+    try { (this.accessory as any).category = this.api.hap.Categories.SENSOR; } catch {}
+
     const service = this.accessory.getService(this.Service.AccessoryInformation);
     if (!service) {
       log.error('No service accessory provided');
