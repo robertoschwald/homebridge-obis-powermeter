@@ -12,7 +12,7 @@
     <!-- Display bezel -->
     <rect x="24" y="30" width="52" height="24" rx="6" ry="6" fill="#e8eef7" stroke="#1f2937" stroke-width="2"/>
 
-    <!-- Digital display (abstract bars) -->
+    <!-- Digital display -->
     <rect x="28" y="34" width="44" height="16" rx="3" ry="3" fill="#1f2937"/>
     <g fill="#aecdff">
         <!-- Four simplified digits as bars (no text) -->
@@ -25,19 +25,15 @@
     <!-- Subtle divider -->
     <line x1="24" y1="58" x2="76" y2="58" stroke="#1f2937" stroke-width="2" stroke-linecap="round" opacity="0.25"/>
 
-    <!-- "OBIS" text" -->
+    <!-- "OBIS" text -->
     <text x="40" y="73" font-family="Arial, sans-serif" font-size="10" fill="#1f2937" text-anchor="middle">
         OBIS
     </text>
 
-    <!-- Optische D0-Schnittstelle -->
+    <!-- Optical Interface -->
     <g>
         <circle cx="68" cy="69" r="5" fill="#fef9c3" stroke="#1f2937" stroke-width="2"/>
         <circle cx="68" cy="69" r="2" fill="#1f2937"/>
     </g>
-
-    <!-- "SMART" text" -->
-    <text x="50" y="90" font-family="Arial, sans-serif" font-size="7" fill="#1f2937" text-anchor="middle">
-        SMARTMETER
-    </text>
+    
 </svg>
