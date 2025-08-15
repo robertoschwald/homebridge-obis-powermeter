@@ -63,8 +63,9 @@ export class HomebridgeSmlPowerConsumption implements DynamicPlatformPlugin {
   public readonly accessories: PlatformAccessory[] = [];
 
   private readonly heartBeatInterval: number;
-  private readonly PLUGIN_NAME = 'homebridge-sml-power-consumption';
+  private readonly REGISTER_PLUGIN_NAME = 'homebridge-sml';
   private readonly PLATFORM_NAME = 'SML';
+  private readonly UUID_NAMESPACE = 'homebridge-sml-power-consumption';
 
   private devices: HomebridgeSmlPowerConsumptionAccessory[] = [];
   private dataDevices: HomebridgeSmlDataAccessory[] = [];
@@ -281,7 +282,7 @@ export class HomebridgeSmlPowerConsumption implements DynamicPlatformPlugin {
   private setupAccessoires() {
     // Power Consumption
     const powerConsumptionName = 'Power Consumption';
-    const powerConsumptionUuid = this.api.hap.uuid.generate(`${this.PLUGIN_NAME}:power-consumption`);
+    const powerConsumptionUuid = this.api.hap.uuid.generate(`${this.UUID_NAMESPACE}:power-consumption`);
     const powerConsumptionExistingAccessory = this.accessories.find(
       (accessory) => accessory.UUID === powerConsumptionUuid,
     );
@@ -295,17 +296,17 @@ export class HomebridgeSmlPowerConsumption implements DynamicPlatformPlugin {
         this.log.info(`${powerConsumptionName} added as accessory`);
         const accessory = new this.api.platformAccessory(powerConsumptionName, powerConsumptionUuid);
         this.devices.push(new PowerConsumption(this.config, this.log, this.api, accessory, this.device!));
-        this.api.registerPlatformAccessories(this.PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
+        this.api.registerPlatformAccessories(this.REGISTER_PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
       }
     } else if (powerConsumptionExistingAccessory) {
-      this.api.unregisterPlatformAccessories(this.PLUGIN_NAME, this.PLATFORM_NAME, [
+      this.api.unregisterPlatformAccessories(this.REGISTER_PLUGIN_NAME, this.PLATFORM_NAME, [
         powerConsumptionExistingAccessory,
       ]);
     }
 
     // Power Return
     const powerReturnName = 'Power Return';
-    const powerReturnUuid = this.api.hap.uuid.generate(`${this.PLUGIN_NAME}:power-return`);
+    const powerReturnUuid = this.api.hap.uuid.generate(`${this.UUID_NAMESPACE}:power-return`);
     const powerReturnExistingAccessory = this.accessories.find(
       (accessory) => accessory.UUID === powerReturnUuid,
     );
@@ -318,15 +319,15 @@ export class HomebridgeSmlPowerConsumption implements DynamicPlatformPlugin {
         this.log.info(`${powerReturnName} added as accessory`);
         const accessory = new this.api.platformAccessory(powerReturnName, powerReturnUuid);
         this.devices.push(new PowerReturn(this.config, this.log, this.api, accessory, this.device!));
-        this.api.registerPlatformAccessories(this.PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
+        this.api.registerPlatformAccessories(this.REGISTER_PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
       }
     } else if (powerReturnExistingAccessory) {
-      this.api.unregisterPlatformAccessories(this.PLUGIN_NAME, this.PLATFORM_NAME, [powerReturnExistingAccessory]);
+      this.api.unregisterPlatformAccessories(this.REGISTER_PLUGIN_NAME, this.PLATFORM_NAME, [powerReturnExistingAccessory]);
     }
 
     // Voltage L1
     const v1Name = 'Voltage L1';
-    const v1Uuid = this.api.hap.uuid.generate(`${this.PLUGIN_NAME}:voltage-l1`);
+    const v1Uuid = this.api.hap.uuid.generate(`${this.UUID_NAMESPACE}:voltage-l1`);
     const v1Existing = this.accessories.find(a => a.UUID === v1Uuid);
     if (v1Existing) {
       this.dataDevices.push(new VoltageSensor(this.config, this.log, this.api, v1Existing, this.device!, {
@@ -338,12 +339,12 @@ export class HomebridgeSmlPowerConsumption implements DynamicPlatformPlugin {
       this.dataDevices.push(new VoltageSensor(this.config, this.log, this.api, accessory, this.device!, {
         obisKey: '1-0:32.7.0*255', name: v1Name, serialSuffix: 'voltage-l1',
       }));
-      this.api.registerPlatformAccessories(this.PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
+      this.api.registerPlatformAccessories(this.REGISTER_PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
     }
 
     // Voltage L2
     const v2Name = 'Voltage L2';
-    const v2Uuid = this.api.hap.uuid.generate(`${this.PLUGIN_NAME}:voltage-l2`);
+    const v2Uuid = this.api.hap.uuid.generate(`${this.UUID_NAMESPACE}:voltage-l2`);
     const v2Existing = this.accessories.find(a => a.UUID === v2Uuid);
     if (v2Existing) {
       this.dataDevices.push(new VoltageSensor(this.config, this.log, this.api, v2Existing, this.device!, {
@@ -355,12 +356,12 @@ export class HomebridgeSmlPowerConsumption implements DynamicPlatformPlugin {
       this.dataDevices.push(new VoltageSensor(this.config, this.log, this.api, accessory, this.device!, {
         obisKey: '1-0:52.7.0*255', name: v2Name, serialSuffix: 'voltage-l2',
       }));
-      this.api.registerPlatformAccessories(this.PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
+      this.api.registerPlatformAccessories(this.REGISTER_PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
     }
 
     // Voltage L3
     const v3Name = 'Voltage L3';
-    const v3Uuid = this.api.hap.uuid.generate(`${this.PLUGIN_NAME}:voltage-l3`);
+    const v3Uuid = this.api.hap.uuid.generate(`${this.UUID_NAMESPACE}:voltage-l3`);
     const v3Existing = this.accessories.find(a => a.UUID === v3Uuid);
     if (v3Existing) {
       this.dataDevices.push(new VoltageSensor(this.config, this.log, this.api, v3Existing, this.device!, {
@@ -372,7 +373,7 @@ export class HomebridgeSmlPowerConsumption implements DynamicPlatformPlugin {
       this.dataDevices.push(new VoltageSensor(this.config, this.log, this.api, accessory, this.device!, {
         obisKey: '1-0:72.7.0*255', name: v3Name, serialSuffix: 'voltage-l3',
       }));
-      this.api.registerPlatformAccessories(this.PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
+      this.api.registerPlatformAccessories(this.REGISTER_PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
     }
   }
 

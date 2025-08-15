@@ -1,14 +1,18 @@
 # Homebridge SML Smart Meter
 
-Read real-time active power from SML/D0 smart meters and expose it to HomeKit as simple sensors.
+Plugin for Homebridge to read values from intelligent smart meters.
 
-- Power Consumption: shows net import power (W)
-- Power Return (optional): shows export power (W). Hidden by default.
-- Voltage L1/L2/L3: shows per-phase voltages (V).
+![HomeKit device display](doc/devices.jpeg)
 
-Powered by smartmeter-obis (SML and D0 protocols).
+- Power Consumption: net import power (W)
+- Power Return (optional): export power (W). Hidden by default.
+- Voltage L1/L2/L3: per‑phase voltages (V)
 
-D0 should theoretically work, but is completely untested. If you have a D0 meter, please try it out and report any issues.
+Tested with EHz smart meter. Feedback for other models (Landis+Gyr, Elster, Itron, …) is welcome.
+
+D0 should theoretically work, but is currently untested — please report issues if you try it.
+
+The sensors are displayed as light sensors in HomeKit, which is the closest match for the data type.
 
 ## Requirements
 - Node.js >= 20
@@ -90,14 +94,13 @@ Project structure:
 - src/Accessories/VoltageSensor.ts — per-phase voltage accessories
 
 ## Roadmap
+- [ ] Get certified by Homebridge team
 - [ ] Support D0 protocol (untested)
-- [ ] Add more OBIS sources (e.g. 1-0:31.7.0 for total active power)
+- [ ] Add more OBIS sources if needed
 - [ ] Improve error handling and logging
-- [ ] Add unit tests for OBIS parsing and HomeKit integration
-- [ ] Add support for multiple meters (e.g. via multiple serial ports)
-- [ ] Support for Homebridge v2
-- [ ] Support for other transport protocols (TCP/IP, LocalFile, StdIn if needed)
-- [ ] Support of JsonEfrProtocol for EFR Smart Grid Hub devices (JSON)
+- [ ] Support for other transports if needed (TCP/IP, LocalFile, StdIn)
+- [ ] Support of JsonEfrProtocol for EFR Smart Grid Hub (JSON)
+- [ ] Multiple meters (e.g. multiple serial ports)
 
 ## License
 Apache-2.0
