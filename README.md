@@ -4,7 +4,7 @@ A Homebridge plugin to read OBIS smart meter values.
 
 ![OBIS Icon](doc/icon__.svg)
 
-Read values from SML/D0 OBIS smart meters and expose them to HomeKit as simple sensors, like ZPA, Landis+Gyr, Elster, Itron, and others.
+Read values from SML/D0 OBIS smart meters and expose them to HomeKit as simple sensors, supporting devices like ZPA, Landis+Gyr, Elster, Itron, and others.
 
 ![Supported devices and wiring](doc/devices.jpeg)
 
