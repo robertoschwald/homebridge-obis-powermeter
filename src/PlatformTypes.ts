@@ -1,19 +1,19 @@
 import { PlatformAccessory } from 'homebridge';
 import type { ObisMeasurement } from 'smartmeter-obis';
 
-export interface HomebridgeSmlPowerConsumptionAccessory {
+export interface HomebridgeObisPowerConsumptionAccessory {
     accessory: PlatformAccessory;
     displayName?: string;
     beat(consumption: number): void;
 }
 
-export interface HomebridgeSmlDataAccessory {
+export interface HomebridgeObisDataAccessory {
     accessory: PlatformAccessory;
     displayName?: string;
     beatWithData(data: Record<string, ObisMeasurement>): void;
 }
 
-export interface HomebridgeSmlDevice {
+export interface HomebridgeObisDevice {
     product_name: string;
     product_type: string;
     serial: string;

@@ -1,12 +1,12 @@
 import {API, Logger, PlatformAccessory, PlatformConfig} from 'homebridge';
-import {HomebridgeSmlDevice, HomebridgeSmlPowerConsumptionAccessory} from '../PlatformTypes';
+import {HomebridgeObisDevice, HomebridgeObisPowerConsumptionAccessory} from '../PlatformTypes';
 
-export default class PowerConsumption implements HomebridgeSmlPowerConsumptionAccessory {
+export default class PowerConsumption implements HomebridgeObisPowerConsumptionAccessory {
     public Service: any;
     public Characteristic: any;
     private powerService: any;
 
-    constructor(_config: PlatformConfig, public readonly log: Logger, public readonly api: API, public accessory: PlatformAccessory, public device: HomebridgeSmlDevice) {
+    constructor(_config: PlatformConfig, public readonly log: Logger, public readonly api: API, public accessory: PlatformAccessory, public device: HomebridgeObisDevice) {
         this.Service = this.api.hap.Service;
         this.Characteristic = this.api.hap.Characteristic;
 

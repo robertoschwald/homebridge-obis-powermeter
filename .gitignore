@@ -121,3 +121,4 @@ dist
 /.direnv
 /.idea
 *.zip
+.DS_Store

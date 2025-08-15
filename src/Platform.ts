@@ -36,11 +36,11 @@ import {API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig} f
 import SmartMeterObis, {ObisMeasurement, ObisOptions} from 'smartmeter-obis';
 import fs from 'fs';
 
-import {HomebridgeSmlDevice, HomebridgeSmlPowerConsumptionAccessory} from './PlatformTypes';
+import {HomebridgeObisDevice, HomebridgeObisPowerConsumptionAccessory} from './PlatformTypes';
 import PowerConsumption from './Accessories/PowerConsumption';
 import PowerReturn from './Accessories/PowerReturn';
 import VoltageSensor from './Accessories/VoltageSensor';
-import type { HomebridgeSmlDataAccessory } from './PlatformTypes';
+import type { HomebridgeObisDataAccessory } from './PlatformTypes';
 import EnergyImport from './Accessories/EnergyImport';
 
 interface PluginConfig extends PlatformConfig {
@@ -58,7 +58,7 @@ interface PluginConfig extends PlatformConfig {
 
 type ObisSerialOptions = ObisOptions & { transportSerialPort?: string };
 
-export class HomebridgeSmlPowerConsumption implements DynamicPlatformPlugin {
+export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
   public Service: unknown;
   public Characteristic: unknown;
   public readonly accessories: PlatformAccessory[] = [];
@@ -68,9 +68,9 @@ export class HomebridgeSmlPowerConsumption implements DynamicPlatformPlugin {
   private readonly PLATFORM_NAME = 'SML';
   private readonly UUID_NAMESPACE = 'homebridge-sml-power-consumption';
 
-  private devices: HomebridgeSmlPowerConsumptionAccessory[] = [];
-  private dataDevices: HomebridgeSmlDataAccessory[] = [];
-  private device: HomebridgeSmlDevice | null = null;
+  private devices: HomebridgeObisPowerConsumptionAccessory[] = [];
+  private dataDevices: HomebridgeObisDataAccessory[] = [];
+  private device: HomebridgeObisDevice | null = null;
   private hbTimer?: NodeJS.Timeout;
 
   // prefer warn when plugin debugLevel is enabled so logs are visible even if child-bridge log level is warn
@@ -93,7 +93,7 @@ export class HomebridgeSmlPowerConsumption implements DynamicPlatformPlugin {
     this.heartBeatInterval = (this.config.pollInterval || 60) * 1000;
 
     // Configure debug level from config or env (SML_DEBUG). Coerce strings -> numbers and clamp 0..2.
-    const envRaw = process.env.SML_DEBUG;
+    const envRaw = process.env.OBIS_DEBUG;
     const envNum = envRaw !== undefined && envRaw !== '' ? Number(envRaw) : NaN;
     const cfgNum = Number(this.config.debugLevel ?? NaN);
     const base = (Number.isFinite(envNum) && envNum >= 0)
@@ -434,7 +434,7 @@ export class HomebridgeSmlPowerConsumption implements DynamicPlatformPlugin {
               throw new Error(`Active power not available. Known keys: ${available}`);
             }
 
-            this.devices.forEach((device: HomebridgeSmlPowerConsumptionAccessory) => {
+            this.devices.forEach((device: HomebridgeObisPowerConsumptionAccessory) => {
               device.beat(value);
             });
 

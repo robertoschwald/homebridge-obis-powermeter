@@ -1,13 +1,13 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import type { API, Logger } from 'homebridge';
-import { HomebridgeSmlPowerConsumption } from '../Platform';
+import { HomebridgeObisPowerConsumption } from '../Platform';
 import SmartMeterObis from 'smartmeter-obis';
 
 describe('HomebridgeSmlPowerConsumption', () => {
     let log: Logger;
     let config: any;
     let api: API;
-    let platform: HomebridgeSmlPowerConsumption;
+    let platform: HomebridgeObisPowerConsumption;
 
     beforeEach(() => {
         log = {
@@ -36,7 +36,7 @@ describe('HomebridgeSmlPowerConsumption', () => {
             on: jest.fn(), // do not auto-trigger initialize
         } as unknown as API;
 
-        platform = new HomebridgeSmlPowerConsumption(log, config, api);
+        platform = new HomebridgeObisPowerConsumption(log, config, api);
     });
 
     afterEach(() => {

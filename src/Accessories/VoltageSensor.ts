@@ -1,6 +1,6 @@
 import { API, Logger, PlatformAccessory, PlatformConfig } from 'homebridge';
 import type { ObisMeasurement } from 'smartmeter-obis';
-import { HomebridgeSmlDataAccessory, HomebridgeSmlDevice } from '../PlatformTypes';
+import { HomebridgeObisDataAccessory, HomebridgeObisDevice } from '../PlatformTypes';
 
 interface VoltageOptions {
   obisKey: string;
@@ -8,13 +8,13 @@ interface VoltageOptions {
   serialSuffix: string;
 }
 
-export default class VoltageSensor implements HomebridgeSmlDataAccessory {
+export default class VoltageSensor implements HomebridgeObisDataAccessory {
   public Service: any;
   public Characteristic: any;
   private voltageService: any;
   private readonly obisKey: string;
 
-  constructor(_config: PlatformConfig, public readonly log: Logger, public readonly api: API, public accessory: PlatformAccessory, public device: HomebridgeSmlDevice, opts: VoltageOptions) {
+  constructor(_config: PlatformConfig, public readonly log: Logger, public readonly api: API, public accessory: PlatformAccessory, public device: HomebridgeObisDevice, opts: VoltageOptions) {
     this.Service = this.api.hap.Service;
     this.Characteristic = this.api.hap.Characteristic;
     this.obisKey = opts.obisKey;
