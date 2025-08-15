@@ -1,18 +1,16 @@
 # Homebridge SML Smart Meter
 
-A Homebridge plugin for reading values from intelligent SML- or D0-capable smart meters.
+Read values from SML/D0 smart meters and expose them to HomeKit as simple sensors.
 
-![HomeKit device display](doc/devices.jpeg)
+![Supported devices and wiring](doc/devices.jpeg)
 
 - Power Consumption: net import power (W)
 - Power Return (optional): export power (W). Hidden by default.
 - Voltage L1/L2/L3: per‑phase voltages (V)
+- Energy Import (Total, kWh): cumulative imported energy
 
-Tested with EHz smart meter. Feedback for other models (Landis+Gyr, Elster, Itron, …) is welcome.
-
+Tested with EHz SML meter. Feedback for other models (Landis+Gyr, Elster, Itron, …) is welcome.
 D0 should theoretically work, but is currently untested — please report issues if you try it.
-
-The sensors are displayed as light sensors in HomeKit, which is the closest match for the data type.
 
 ## Requirements
 - Node.js >= 20
@@ -71,9 +69,15 @@ Voltage sensors map directly to:
 - L2: 1-0:52.7.0*255
 - L3: 1-0:72.7.0*255
 
-Units: kW -> W for power, kV -> V for voltage; otherwise values are used as-is.
+Energy totals map directly to:
+- Import total (kWh): 1-0:1.8.0*255 (fallback 1-0:1.8.0)
+
+Units: kW -> W for power, kV -> V for voltage, Wh -> kWh for energy if needed; otherwise values are used as-is.
 
 HomeKit service used: CurrentAmbientLightLevel (Light Sensor). Values are always >= 0.0001 as required by HomeKit. Accessories are categorized as SENSOR to avoid bulb icons in some clients.
+
+### Display precision (Home app)
+Apple’s Home app heavily rounds Light Sensor values at higher magnitudes. For example, 11165.0976 kWh may display as 11200. The precise value is still written to the characteristic. To see exact values, use apps like Eve or Home+ that show raw characteristic readings.
 
 ## Troubleshooting
 - Serial device not found: verify the serialPort path (prefer /dev/serial/by-id on Linux) and permissions.
@@ -92,6 +96,7 @@ Project structure:
 - src/Accessories/PowerConsumption.ts — consumption accessory
 - src/Accessories/PowerReturn.ts — export accessory (optional)
 - src/Accessories/VoltageSensor.ts — per-phase voltage accessories
+- src/Accessories/EnergyImport.ts — total energy import (kWh)
 
 ## Roadmap
 - [ ] Get certified by Homebridge team
