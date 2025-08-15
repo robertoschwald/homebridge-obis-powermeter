@@ -1,4 +1,4 @@
-import { API, Logger, PlatformAccessory, PlatformConfig } from 'homebridge';
+import { API, Logger, PlatformAccessory, PlatformConfig, Service as HbService, Characteristic as HbCharacteristic } from 'homebridge';
 import type { ObisMeasurement } from 'smartmeter-obis';
 import { HomebridgeObisDataAccessory, HomebridgeObisDevice } from '../PlatformTypes';
 
@@ -9,33 +9,55 @@ interface VoltageOptions {
 }
 
 export default class VoltageSensor implements HomebridgeObisDataAccessory {
-  public Service: any;
-  public Characteristic: any;
-  private voltageService: any;
+  public Service: typeof HbService;
+  public Characteristic: typeof HbCharacteristic;
+  private voltageService!: HbService;
   private readonly obisKey: string;
 
-  constructor(_config: PlatformConfig, public readonly log: Logger, public readonly api: API, public accessory: PlatformAccessory, public device: HomebridgeObisDevice, opts: VoltageOptions) {
+  constructor(
+    _config: PlatformConfig,
+    public readonly log: Logger,
+    public readonly api: API,
+    public accessory: PlatformAccessory,
+    public device: HomebridgeObisDevice,
+    opts: VoltageOptions,
+  ) {
     this.Service = this.api.hap.Service;
     this.Characteristic = this.api.hap.Characteristic;
     this.obisKey = opts.obisKey;
 
-    try { (this.accessory as any).category = this.api.hap.Categories.SENSOR; } catch (_e) { /* noop: category not supported */ }
+    try {
+      (this.accessory as unknown as { category?: number }).category =
+        this.api.hap.Categories.SENSOR;
+    } catch (_e) {
+      // noop: category not supported
+    }
 
     const info = this.accessory.getService(this.Service.AccessoryInformation);
     if (!info) {
       log.error('No service accessory provided');
       return;
     }
-    info.setCharacteristic(this.Characteristic.Manufacturer, 'HomebridgeObis')
-      .setCharacteristic(this.Characteristic.Model, `${this.device.product_name} Voltage`)
-      .setCharacteristic(this.Characteristic.SerialNumber, `${this.device.serial}-${opts.serialSuffix}`);
+    info
+      .setCharacteristic(this.Characteristic.Manufacturer, 'HomebridgeObis')
+      .setCharacteristic(
+        this.Characteristic.Model,
+        `${this.device.product_name} Voltage`,
+      )
+      .setCharacteristic(
+        this.Characteristic.SerialNumber,
+        `${this.device.serial}-${opts.serialSuffix}`,
+      );
 
     // Use LightSensor to display numeric value in most clients
-    this.voltageService = this.accessory.getService(this.Service.LightSensor) || this.accessory.addService(this.Service.LightSensor, opts.name);
+    this.voltageService = this.accessory.getService(this.Service.LightSensor)
+      || this.accessory.addService(this.Service.LightSensor, opts.name);
   }
 
   private floatOf(m?: ObisMeasurement): number {
-    if (!m) { return NaN; }
+    if (!m) {
+      return NaN;
+    }
     try {
       if (typeof m.valueToString === 'function') {
         const s = String(m.valueToString());
@@ -43,26 +65,41 @@ export default class VoltageSensor implements HomebridgeObisDataAccessory {
         if (match) {
           let v = Number(match[0].replace(',', '.'));
           const unit = s.toLowerCase();
-          if (unit.includes('kv')) { v = v * 1000; }
+          if (unit.includes('kv')) {
+            v = v * 1000;
+          }
           return v;
         }
       }
-      const vals = typeof (m as any).getValues === 'function' ? (m as any).getValues() : (m as any).values;
+      const maybe = m as unknown as {
+        getValues?: () => Array<{ value: number; unit?: string }>;
+        values?: Array<{ value: number; unit?: string }>;
+      };
+      const vals = typeof maybe.getValues === 'function'
+        ? maybe.getValues()
+        : maybe.values;
       if (Array.isArray(vals) && vals.length > 0) {
-        const { value, unit } = vals[0] as unknown as { value: number; unit: string };
-        if (Number.isFinite(value)) {
-          const u = String(unit || '').toLowerCase();
-          if (u.includes('kv')) { return value * 1000; }
-          return value;
+        const first = vals[0];
+        if (Number.isFinite(first?.value)) {
+          const u = String(first.unit || '').toLowerCase();
+          if (u.includes('kv')) {
+            return first.value * 1000;
+          }
+          return first.value;
         }
       }
-    } catch (_e) { /* noop: parse failure handled by returning NaN */ }
+    } catch (_e) {
+      // noop: parse failure handled by returning NaN
+    }
     return NaN;
   }
 
   public beatWithData(data: Record<string, ObisMeasurement>): void {
     const v = this.floatOf(data[this.obisKey]);
     const value = Number.isFinite(v) && v > 0 ? v : 0.0001; // HomeKit min
-    this.voltageService.setCharacteristic(this.Characteristic.CurrentAmbientLightLevel, value);
+    this.voltageService.setCharacteristic(
+      this.Characteristic.CurrentAmbientLightLevel,
+      value,
+    );
   }
 }
