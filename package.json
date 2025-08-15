@@ -17,8 +17,16 @@
     "homebridge": ">=1.8.0"
   },
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE",
+    "config.schema.json",
+    "doc/**/*"
+  ],
   "scripts": {
-    "lint": "eslint src/**.ts",
+    "lint": "eslint 'src/**/*.ts'",
     "watch": "npm run build && npm link && nodemon",
     "build": "rimraf ./dist && tsc",
     "package": "npm run build && node -p \"'homebridge-obis-powermeter-' + require('./package.json').version + '.zip'\" | xargs -I {} zip -r {} dist/ package.json README.md LICENSE config.schema.json",
