@@ -10,6 +10,9 @@ export default class PowerConsumption implements HomebridgeSmlPowerConsumptionAc
         this.Service = this.api.hap.Service;
         this.Characteristic = this.api.hap.Characteristic;
 
+        // ensure HomeKit category is SENSOR (prevents light-bulb rendering in some clients)
+        try { (this.accessory as any).category = this.api.hap.Categories.SENSOR; } catch {}
+
         if (!accessory) {
             log.error('No accessory provided');
             return;

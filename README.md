@@ -1,6 +1,6 @@
 # Homebridge SML Smart Meter
 
-Plugin for Homebridge to read values from intelligent smart meters.
+A Homebridge plugin for reading values from intelligent SML- or D0-capable smart meters.
 
 ![HomeKit device display](doc/devices.jpeg)
 
