@@ -12,14 +12,14 @@ export default class EnergyImport implements HomebridgeObisDataAccessory {
     this.Service = this.api.hap.Service;
     this.Characteristic = this.api.hap.Characteristic;
 
-    try { (this.accessory as any).category = this.api.hap.Categories.SENSOR; } catch {}
+    try { (this.accessory as any).category = this.api.hap.Categories.SENSOR; } catch (_e) { /* noop: category not supported */ }
 
     const info = this.accessory.getService(this.Service.AccessoryInformation);
     if (!info) {
       log.error('No service accessory provided');
       return;
     }
-    info.setCharacteristic(this.Characteristic.Manufacturer, 'HomebridgeSml')
+    info.setCharacteristic(this.Characteristic.Manufacturer, 'HomebridgeObis')
       .setCharacteristic(this.Characteristic.Model, `${this.device.product_name} Energy Import`)
       .setCharacteristic(this.Characteristic.SerialNumber, `${this.device.serial}-energy-import-kwh`);
 
@@ -51,7 +51,7 @@ export default class EnergyImport implements HomebridgeObisDataAccessory {
           return value;
         }
       }
-    } catch {}
+    } catch (_e) { /* noop: parse failure handled by returning NaN */ }
     return NaN;
   }
 

@@ -19,14 +19,14 @@ export default class VoltageSensor implements HomebridgeObisDataAccessory {
     this.Characteristic = this.api.hap.Characteristic;
     this.obisKey = opts.obisKey;
 
-    try { (this.accessory as any).category = this.api.hap.Categories.SENSOR; } catch {}
+    try { (this.accessory as any).category = this.api.hap.Categories.SENSOR; } catch (_e) { /* noop: category not supported */ }
 
     const info = this.accessory.getService(this.Service.AccessoryInformation);
     if (!info) {
       log.error('No service accessory provided');
       return;
     }
-    info.setCharacteristic(this.Characteristic.Manufacturer, 'HomebridgeSml')
+    info.setCharacteristic(this.Characteristic.Manufacturer, 'HomebridgeObis')
       .setCharacteristic(this.Characteristic.Model, `${this.device.product_name} Voltage`)
       .setCharacteristic(this.Characteristic.SerialNumber, `${this.device.serial}-${opts.serialSuffix}`);
 
@@ -56,7 +56,7 @@ export default class VoltageSensor implements HomebridgeObisDataAccessory {
           return value;
         }
       }
-    } catch {}
+    } catch (_e) { /* noop: parse failure handled by returning NaN */ }
     return NaN;
   }
 
@@ -66,4 +66,3 @@ export default class VoltageSensor implements HomebridgeObisDataAccessory {
     this.voltageService.setCharacteristic(this.Characteristic.CurrentAmbientLightLevel, value);
   }
 }
-

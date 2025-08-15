@@ -1,7 +1,7 @@
 /**
- * Homebridge SML Power Consumption Plugin
- * Reads power consumption data from a Smart Meter using SML protocol over a serial port.
- * Provides Homebridge accessories for power consumption and return.
+ * Homebridge OBIS Power Meter Plugin
+ * Reads power/energy data from a Smart Meter via OBIS using smartmeter-obis.
+ * Provides Homebridge accessories for power consumption, return, voltage, and energy import.
  */
 
 /**
@@ -65,8 +65,8 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
 
   private readonly heartBeatInterval: number;
   private readonly REGISTER_PLUGIN_NAME = 'homebridge-obis-powermeter';
-  private readonly PLATFORM_NAME = 'SML';
-  private readonly UUID_NAMESPACE = 'homebridge-sml-power-consumption';
+  private readonly PLATFORM_NAME = 'OBIS';
+  private readonly UUID_NAMESPACE = 'homebridge-obis-power-consumption';
 
   private devices: HomebridgeObisPowerConsumptionAccessory[] = [];
   private dataDevices: HomebridgeObisDataAccessory[] = [];
@@ -92,7 +92,7 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
     this.Characteristic = this.api.hap.Characteristic;
     this.heartBeatInterval = (this.config.pollInterval || 60) * 1000;
 
-    // Configure debug level from config or env (SML_DEBUG). Coerce strings -> numbers and clamp 0..2.
+    // Configure debug level from config or env (OBIS_DEBUG). Coerce strings -> numbers and clamp 0..2.
     const envRaw = process.env.OBIS_DEBUG;
     const envNum = envRaw !== undefined && envRaw !== '' ? Number(envRaw) : NaN;
     const cfgNum = Number(this.config.debugLevel ?? NaN);
@@ -162,17 +162,17 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
         // Basic FS existence/perm check
         try {
           if (!fs.existsSync(this.obisOptions.transportSerialPort!)) {
-            this.log.warn(`[SML] Serial device does not exist: ${this.obisOptions.transportSerialPort}`);
+            this.log.warn(`[OBIS] Serial device does not exist: ${this.obisOptions.transportSerialPort}`);
           } else {
             const stat = fs.statSync(this.obisOptions.transportSerialPort!);
-            this.d(`[SML] Serial device exists. Mode: ${stat.mode.toString(8)} Size: ${stat.size}`, 2);
+            this.d(`[OBIS] Serial device exists. Mode: ${stat.mode.toString(8)} Size: ${stat.size}`, 2);
           }
         } catch (e) {
-          this.d(`[SML] FS check failed for serial device: ${String(e)}`, 2);
+          this.d(`[OBIS] FS check failed for serial device: ${String(e)}`, 2);
         }
 
         // Log validation parameters split across lines to satisfy max-len
-        const logHeader = `[SML] Validating serial port ${this.obisOptions.transportSerialPort}`;
+        const logHeader = `[OBIS] Validating serial port ${this.obisOptions.transportSerialPort}`;
         const logDetails = '('
           + `protocol=${this.obisOptions.protocol}, `
           + `transport=${this.obisOptions.transport}, `
@@ -201,7 +201,7 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
             }
 
             if (error) {
-              this.log.error(`[SML] SmartMeter error during validate: ${error.message}`);
+              this.log.error(`[OBIS] SmartMeter error during validate: ${error.message}`);
               smTransport.stop?.();
               settled = true;
               resolve(false);
@@ -209,7 +209,7 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
             }
 
             try {
-              this.d(`[SML] validate callback data: ${summarize(data)}`, 2);
+              this.d(`[OBIS] validate callback data: ${summarize(data)}`, 2);
               const hasAnyData = data && Object.keys(data).length > 0;
               if (hasAnyData) {
                 const getStr = (k: string) => data?.[k]?.valueToString?.();
@@ -220,7 +220,7 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
                   firmware_version: getStr('1-0:0.2.0*0') ?? '',
                   api_version: getStr('1-0:0.2.0*0') ?? '',
                 };
-                this.log.info('[SML] Serial validation succeeded (first frame received).');
+                this.log.info('[OBIS] Serial validation succeeded (first frame received).');
                 smTransport.stop?.();
                 settled = true;
                 resolve(true);
@@ -229,7 +229,7 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
 
               return false;
             } catch (e) {
-              this.log.warn(`[SML] Serial validation got data but parsing failed: ${String(e)}`);
+              this.log.warn(`[OBIS] Serial validation got data but parsing failed: ${String(e)}`);
               smTransport.stop?.();
               settled = true;
               resolve(true);
@@ -238,12 +238,12 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
           },
         );
 
-        this.d('[SML] Starting serial processing for validation...', 1);
+        this.d('[OBIS] Starting serial processing for validation...', 1);
         smTransport.process();
 
         setTimeout(() => {
           if (!settled) {
-            this.log.error('[SML] Timeout while validating the serial port. No data received in time.');
+            this.log.error('[OBIS] Timeout while validating the serial port. No data received in time.');
             smTransport.stop?.();
             settled = true;
             resolve(false);
@@ -392,7 +392,7 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
   }
 
   private async heartBeat() {
-    this.d('[SML] Heartbeat: starting read cycle...', 1);
+    this.d('[OBIS] Heartbeat: starting read cycle...', 1);
     let settled = false;
 
     try {
@@ -411,21 +411,21 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
           }
 
           if (error) {
-            this.log.error(`[SML] SmartMeter read error: ${error.message}`);
+            this.log.error(`[OBIS] SmartMeter read error: ${error.message}`);
             smTransport.stop?.();
             settled = true;
             return false;
           }
 
           try {
-            this.d(`[SML] Heartbeat data: ${summarize(data)}`, 2);
+            this.d(`[OBIS] Heartbeat data: ${summarize(data)}`, 2);
             // update voltage sensors first (does not depend on power)
             try {
               if (data) {
                 this.dataDevices.forEach(d => d.beatWithData(data as Record<string, ObisMeasurement>));
               }
             } catch (e) {
-              this.d(`[SML] Voltage update failed: ${String(e)}`, 1);
+              this.d(`[OBIS] Voltage update failed: ${String(e)}`, 1);
             }
 
             const { value, src } = this.computeActivePower(data as Record<string, ObisMeasurement>);
@@ -438,12 +438,12 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
               device.beat(value);
             });
 
-            this.d(`[SML] Heartbeat value=${value} (src=${src})`, 1);
+            this.d(`[OBIS] Heartbeat value=${value} (src=${src})`, 1);
             smTransport.stop?.();
             settled = true;
             return true;
           } catch (e) {
-            this.log.error(`[SML] Cannot read active power consumption: ${String(e)}`);
+            this.log.error(`[OBIS] Cannot read active power consumption: ${String(e)}`);
             smTransport.stop?.();
             settled = true;
             return false;
@@ -451,18 +451,18 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
         },
       );
 
-      this.d('[SML] Starting serial processing for heartbeat...', 1);
+      this.d('[OBIS] Starting serial processing for heartbeat...', 1);
       smTransport.process();
 
       setTimeout(() => {
         if (!settled) {
-          this.log.error('[SML] Timeout reading active power. Check the Power‑meter Serial Port name.');
+          this.log.error('[OBIS] Timeout reading active power. Check the Power‑meter Serial Port name.');
           smTransport.stop?.();
           settled = true;
         }
       }, 30000);
     } catch (error) {
-      this.log.error('[SML] Something went wrong in heartbeat; please double‑check the Power‑meter Serial Port name.');
+      this.log.error('[OBIS] Something went wrong in heartbeat; please double‑check the Power‑meter Serial Port name.');
       this.log.debug(String(error));
     }
   }

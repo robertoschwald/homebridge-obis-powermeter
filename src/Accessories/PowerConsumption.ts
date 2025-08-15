@@ -11,7 +11,7 @@ export default class PowerConsumption implements HomebridgeObisPowerConsumptionA
         this.Characteristic = this.api.hap.Characteristic;
 
         // ensure HomeKit category is SENSOR (prevents light-bulb rendering in some clients)
-        try { (this.accessory as any).category = this.api.hap.Categories.SENSOR; } catch {}
+        try { (this.accessory as any).category = this.api.hap.Categories.SENSOR; } catch (_e) { /* noop: category not supported */ }
 
         if (!accessory) {
             log.error('No accessory provided');
@@ -28,7 +28,7 @@ export default class PowerConsumption implements HomebridgeObisPowerConsumptionA
             log.error('No service accessory provided');
             return;
         }
-        service.setCharacteristic(this.Characteristic.Manufacturer, 'HomebridgeSml')
+        service.setCharacteristic(this.Characteristic.Manufacturer, 'HomebridgeObis')
             .setCharacteristic(this.Characteristic.Model, device.product_name)
             .setCharacteristic(this.Characteristic.SerialNumber, `${device.serial}-power-consumption`);
     }

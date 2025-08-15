@@ -1,20 +1,18 @@
-# Homebridge OBIS Powermeter 
+# Homebridge OBIS Powermeter
 
 A Homebridge plugin to read OBIS smart meter values.
 
-![OBIS Icon](doc/icon__.svg)
+<img alt="Plugin Icon" src="doc/icon.svg" width="100" height="100" />
 
-Read values from SML/D0 OBIS smart meters and expose them to HomeKit as simple sensors, supporting devices like ZPA, Landis+Gyr, Elster, Itron, and others.
+![Supported devices and wiring](doc/devices.jpg)
 
-![Supported devices and wiring](doc/devices.jpeg)
-
+Features
 - Power Consumption: net import power (W)
-- Power Return (optional): export power (W). Hidden by default.
+- Power Return (optional): export power (W). Hidden by default
 - Voltage L1/L2/L3: per‑phase voltages (V)
 - Energy Import (Total, kWh): cumulative imported energy
 
-Tested with ZPA power meter. Feedback for other models (Landis+Gyr, Elster, Itron, …) is welcome.
-D0 should theoretically work, but is currently untested — please report issues if you try it.
+Tested with ZPA power meter. Feedback for other models (Landis+Gyr, Elster, Itron, …) is welcome. D0 should theoretically work, but is currently untested — please report issues if you try it.
 
 ## Requirements
 - Node.js >= 20
@@ -27,12 +25,12 @@ npm i -g homebridge-obis-powermeter
 ```
 
 ## Configure
-Use Homebridge UI (recommended) or edit config.json. Platform name is SML.
+Use the Homebridge UI (recommended) or edit config.json. Platform name is OBIS.
 
 Minimal example:
 ```json
 {
-  "platform": "SML",
+  "platform": "OBIS",
   "serialPort": "/dev/ttyUSB0"
 }
 ```
@@ -40,7 +38,7 @@ Minimal example:
 Full example with options:
 ```json
 {
-  "platform": "SML",
+  "platform": "OBIS",
   "serialPort": "/dev/ttyUSB0",
   "protocol": "SmlProtocol",
   "serialBaudRate": 9600,
@@ -60,7 +58,9 @@ Notes:
 - You can also set OBIS_DEBUG=0|1|2 in the child bridge environment for extra logs.
 
 ## What values are shown?
-The plugin computes net active power (in watts) from your meter and feeds it to both accessories. Power Consumption displays it when > 0 (import). Power Return displays the absolute value when net < 0 (export).
+The plugin computes net active power (in watts) and feeds it to two accessories:
+- Power Consumption displays net power when > 0 (import).
+- Power Return displays the absolute value when net < 0 (export).
 
 Priority of OBIS sources (first available wins):
 1) 1-0:16.7.0 (or 1-0:16.7.0*255) — total instantaneous active power
@@ -76,12 +76,12 @@ Voltage sensors map directly to:
 Energy totals map directly to:
 - Import total (kWh): 1-0:1.8.0*255 (fallback 1-0:1.8.0)
 
-Units: kW -> W for power, kV -> V for voltage, Wh -> kWh for energy if needed; otherwise values are used as-is.
+Units: kW -> W for power, kV -> V for voltage, Wh -> kWh for energy when needed; otherwise values are used as-is.
 
 HomeKit service used: CurrentAmbientLightLevel (Light Sensor). Values are always >= 0.0001 as required by HomeKit. Accessories are categorized as SENSOR to avoid bulb icons in some clients.
 
 ### Display precision (Home app)
-Apple’s Home app heavily rounds Light Sensor values at higher magnitudes. For example, 11165.0976 kWh may display as 11200. The precise value is still written to the characteristic. To see exact values, use apps like Eve or Home+ that show raw characteristic readings.
+Apple’s Home app heavily rounds Light Sensor values at higher magnitudes. For example, a meter reading of 1-0:1.8.0*255 like 11165.0976 kWh can display as 11200. The precise value is still written to the characteristic; use apps like Eve or Home+ to see raw readings.
 
 ## Troubleshooting
 - Serial device not found: verify the serialPort path (prefer /dev/serial/by-id on Linux) and permissions.

@@ -11,14 +11,14 @@ export default class PowerReturn implements HomebridgeObisPowerConsumptionAccess
     this.Characteristic = this.api.hap.Characteristic;
 
     // ensure HomeKit category is SENSOR (prevents light-bulb rendering in some clients)
-    try { (this.accessory as any).category = this.api.hap.Categories.SENSOR; } catch {}
+    try { (this.accessory as any).category = this.api.hap.Categories.SENSOR; } catch (_e) { /* noop: category not supported */ }
 
     const service = this.accessory.getService(this.Service.AccessoryInformation);
     if (!service) {
       log.error('No service accessory provided');
       return;
     }
-    service.setCharacteristic(this.Characteristic.Manufacturer, 'HomebridgeSml')
+    service.setCharacteristic(this.Characteristic.Manufacturer, 'HomebridgeObis')
       .setCharacteristic(this.Characteristic.Model, device.product_name)
       .setCharacteristic(this.Characteristic.SerialNumber, `${device.serial}-power-return`);
 
