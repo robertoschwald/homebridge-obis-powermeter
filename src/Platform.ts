@@ -327,7 +327,7 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
     }
 
     // Energy Import (Total, kWh)
-    const eImpName = 'Energy Import (Total, kWh)';
+    const eImpName = 'Energy Import';
     const eImpUuid = this.api.hap.uuid.generate(`${this.UUID_NAMESPACE}:energy-import`);
     const eImpExisting = this.accessories.find(a => a.UUID === eImpUuid);
     if (eImpExisting) {
