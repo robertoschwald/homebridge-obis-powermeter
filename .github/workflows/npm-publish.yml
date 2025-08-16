@@ -34,7 +34,7 @@ jobs:
         run: |
           git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
           if git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
-            echo "Tagged commit is on main branch."
+            echo "Tagged commit is reachable from main."
           else
             echo "Refusing to publish: tag commit is not on protected branch 'main'." >&2
             exit 1
@@ -102,8 +102,8 @@ jobs:
             exit 1
           fi
 
-      - name: Install (for publish metadata)
-        run: npm ci --omit=dev
+      - name: Install dependencies (include dev)
+        run: npm ci
 
       - name: Publish to npm
         if: github.repository == 'robertoschwald/homebridge-obis-powermeter'
