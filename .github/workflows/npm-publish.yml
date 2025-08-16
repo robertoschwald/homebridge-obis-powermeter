@@ -32,9 +32,9 @@ jobs:
 
       - name: Ensure tag commit is on main
         run: |
-          git fetch --no-tags --depth=0 origin +refs/heads/main:refs/remotes/origin/main
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
           if git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
-            echo "Tagged commit is on main branch. Good."
+            echo "Tagged commit is on main branch."
           else
             echo "Refusing to publish: tag commit is not on protected branch 'main'." >&2
             exit 1

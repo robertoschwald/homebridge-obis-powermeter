@@ -1,3 +1,8 @@
+[![npm version](https://img.shields.io/npm/v/homebridge-obis-powermeter)](https://www.npmjs.com/package/homebridge-obis-powermeter)
+[![npm downloads](https://img.shields.io/npm/dm/homebridge-obis-powermeter)](https://www.npmjs.com/package/homebridge-obis-powermeter)
+[![GitHub release](https://img.shields.io/github/v/release/robertoschwald/homebridge-obis-powermeter?display_name=tag&sort=semver)](https://github.com/robertoschwald/homebridge-obis-powermeter/releases)
+[![Build](https://github.com/robertoschwald/homebridge-obis-powermeter/actions/workflows/npm-publish.yml/badge.svg?branch=main)](https://github.com/robertoschwald/homebridge-obis-powermeter/actions/workflows/npm-publish.yml)
+
 # Homebridge OBIS Powermeter
 
 A Homebridge plugin to read OBIS smart meter values.
@@ -16,7 +21,7 @@ Tested with ZPA power meter. Feedback for other models (Landis+Gyr, Elster, Itro
 
 ## Requirements
 - Node.js >= 20
-- Homebridge >= 1.8
+- Homebridge >= 2.0
 - A supported SML/D0 interface on your meter (e.g. IR head via USB)
 
 ## Install
