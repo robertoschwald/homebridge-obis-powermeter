@@ -102,6 +102,13 @@ jobs:
             exit 1
           fi
 
+      - name: Configure npm auth
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm config set //registry.npmjs.org/:_authToken "$NODE_AUTH_TOKEN"
+          npm whoami
+
       - name: Install dependencies (include dev)
         run: npm ci
 

@@ -21,7 +21,7 @@ Tested with ZPA power meter. Feedback for other models (Landis+Gyr, Elster, Itro
 
 ## Requirements
 - Node.js >= 20
-- Homebridge >= 2.0
+- Homebridge >= 1.8.0
 - A supported SML/D0 interface on your meter (e.g. IR head via USB)
 
 ## Install
