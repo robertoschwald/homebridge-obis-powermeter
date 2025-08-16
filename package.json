@@ -1,10 +1,11 @@
 {
   "name": "homebridge-obis-powermeter",
   "displayName": "Homebridge OBIS Powermeter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Plugin for OBIS smart meter devices (SML/D0) to read power, energy, and voltages.",
   "license": "Apache-2.0",
   "author": "Robert Oschwald <robertoschwald@users.noreply.github.com>",
+  "homepage": "https://github.com/robertoschwald/homebridge-obis-powermeter#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/robertoschwald/homebridge-obis-powermeter.git"

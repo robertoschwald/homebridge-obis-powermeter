@@ -7,6 +7,12 @@
   "schema": {
     "type": "object",
     "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "default": "OBIS Energy Meter",
+        "required": true
+      },
       "serialPort": {
         "title": "Serial Port",
         "description": "Serial port connected to the OBIS (SML/D0) interface. E.g. '/dev/ttyUSB0' or a stable /dev/serial/by-id path.",
