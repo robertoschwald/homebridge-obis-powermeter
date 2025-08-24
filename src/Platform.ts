@@ -42,6 +42,7 @@ import PowerReturn from './Accessories/PowerReturn';
 import VoltageSensor from './Accessories/VoltageSensor';
 import type { HomebridgeObisDataAccessory } from './PlatformTypes';
 import EnergyImport from './Accessories/EnergyImport';
+import { EnergyHistory } from './Accessories/EnergyHistory';
 
 interface PluginConfig extends PlatformConfig {
     pollInterval?: number;
@@ -53,6 +54,7 @@ interface PluginConfig extends PlatformConfig {
     serialParity?: 'none' | 'even' | 'odd';
     hidePowerConsumptionDevice?: boolean;
     hidePowerReturnDevice?: boolean;
+    enableFakegatoHistory?: boolean;
     debugLevel?: number; // optional extra logging for smartmeter-obis
 }
 
@@ -72,6 +74,7 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
   private dataDevices: HomebridgeObisDataAccessory[] = [];
   private device: HomebridgeObisDevice | null = null;
   private hbTimer?: NodeJS.Timeout;
+  private energyHistory?: EnergyHistory;
 
   // prefer warn when plugin debugLevel is enabled so logs are visible even if child-bridge log level is warn
   private d(msg: string, level = 1) {
@@ -331,13 +334,30 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
     const eImpName = 'Energy Import';
     const eImpUuid = this.api.hap.uuid.generate(`${this.UUID_NAMESPACE}:energy-import`);
     const eImpExisting = this.accessories.find(a => a.UUID === eImpUuid);
+    let eImpAccessory: PlatformAccessory;
     if (eImpExisting) {
       this.dataDevices.push(new EnergyImport(this.config, this.log, this.api, eImpExisting, this.device!));
+      eImpAccessory = eImpExisting;
     } else {
       this.log.info(`${eImpName} added as accessory`);
       const accessory = new this.api.platformAccessory(eImpName, eImpUuid);
       this.dataDevices.push(new EnergyImport(this.config, this.log, this.api, accessory, this.device!));
       this.api.registerPlatformAccessories(this.REGISTER_PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
+      eImpAccessory = accessory;
+    }
+
+    // Initialize Fakegato history if enabled and not yet created
+    if (this.config.enableFakegatoHistory !== false && !this.energyHistory) {
+      try {
+        const storagePath = (this.api as unknown as { user?: { storagePath?: () => string } }).user?.storagePath?.()
+          || process.env.HOMEBRIDGE_STORAGE_PATH
+          || process.env.HOME
+          || '.';
+        this.energyHistory = new EnergyHistory(this.api, eImpAccessory, this.log, storagePath);
+        this.d('[OBIS] Fakegato energy history initialized.', 1);
+      } catch (e) {
+        this.log.warn(`[OBIS] Failed to initialize Fakegato history: ${String(e)}`);
+      }
     }
 
     // Voltage L1
@@ -439,6 +459,23 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
               device.beat(value);
             });
 
+            // Add to Fakegato history if enabled
+            try {
+              if (this.energyHistory && data) {
+                const energy = this.floatKwhOf((data as Record<string, ObisMeasurement>)['1-0:1.8.0*255']
+                  ?? (data as Record<string, ObisMeasurement>)['1-0:1.8.0']);
+                const importPower = value > 0 ? value : 0;
+                if (Number.isFinite(importPower) && Number.isFinite(energy)) {
+                  this.energyHistory.add(importPower, energy);
+                } else if (Number.isFinite(importPower)) {
+                  // still record power if energy unavailable
+                  this.energyHistory.add(importPower, 0);
+                }
+              }
+            } catch (e) {
+              this.d(`[OBIS] Failed to add history sample: ${String(e)}`, 1);
+            }
+
             this.d(`[OBIS] Heartbeat value=${value} (src=${src})`, 1);
             smTransport.stop?.();
             settled = true;
@@ -506,6 +543,43 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
             return value * 1000;
           }
           return value;
+        }
+      }
+    } catch (_e) {
+      // ignore parse errors
+    }
+    return NaN;
+  }
+
+  private floatKwhOf(m?: ObisMeasurement): number {
+    if (!m) {
+      return NaN;
+    }
+    try {
+      if (typeof m.valueToString === 'function') {
+        const s = String(m.valueToString());
+        const match = s.match(/-?\d+(?:[.,]\d+)?/);
+        if (match) {
+          let v = Number(match[0].replace(',', '.'));
+          const unit = s.toLowerCase();
+          if (unit.includes('wh') && !unit.includes('kwh')) {
+            v = v / 1000;
+          }
+          return v;
+        }
+      }
+      type V = { value: number; unit?: string };
+      type MaybeValues = { getValues?: () => V[]; values?: V[] };
+      const mv: MaybeValues = m as unknown as MaybeValues;
+      const vals = typeof mv.getValues === 'function' ? mv.getValues() : mv.values;
+      if (Array.isArray(vals) && vals.length > 0) {
+        const first = vals[0];
+        if (Number.isFinite(first?.value)) {
+          const u = String(first.unit || '').toLowerCase();
+          if (u.includes('wh') && !u.includes('kwh')) {
+            return first.value / 1000;
+          }
+          return first.value;
         }
       }
     } catch (_e) {

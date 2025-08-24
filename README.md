@@ -2,6 +2,7 @@
 [![npm version](https://img.shields.io/npm/v/homebridge-obis-powermeter)](https://www.npmjs.com/package/homebridge-obis-powermeter)
 [![npm downloads](https://img.shields.io/npm/dm/homebridge-obis-powermeter)](https://www.npmjs.com/package/homebridge-obis-powermeter)
 [![GitHub release](https://img.shields.io/github/v/release/robertoschwald/homebridge-obis-powermeter?display_name=tag&sort=semver)](https://github.com/robertoschwald/homebridge-obis-powermeter/releases)
+[![Build](https://github.com/robertoschwald/homebridge-obis-powermeter/actions/workflows/npm-publish.yml/badge.svg?branch=main)](https://github.com/robertoschwald/homebridge-obis-powermeter/actions/workflows/npm-publish.yml)
 
 # Homebridge OBIS Powermeter
 
@@ -112,7 +113,7 @@ Project structure:
 
 ## Roadmap
 - [X] Get certified by Homebridge team
-- [ ] Support History for power consumption/return (Eve app)
+- [X] Support History for power consumption/return (Eve app) since 1.0.3
 - [ ] Support D0 protocol (untested)
 - [ ] Add more OBIS sources if needed
 - [ ] Improve error handling and logging
