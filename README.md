@@ -108,7 +108,8 @@ Project structure:
 - src/Accessories/EnergyImport.ts — total energy import (kWh)
 
 ## Roadmap
-- [ ] Get certified by Homebridge team
+- [ ] [Get certified by Homebridge team](https://github.com/homebridge/plugins/issues/864#issuecomment-3193759718)
+- [ ] Support History for power consumption/return (Eve app)
 - [ ] Support D0 protocol (untested)
 - [ ] Add more OBIS sources if needed
 - [ ] Improve error handling and logging
