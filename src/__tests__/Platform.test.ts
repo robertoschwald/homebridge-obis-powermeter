@@ -52,6 +52,25 @@ describe('HomebridgeSmlPowerConsumption', () => {
     expect((platform as any).validateConfig()).toBe(false);
   });
 
+  it('validateConfig returns false when serialPort is missing', () => {
+    const cfg = { ...config } as any;
+    delete cfg.serialPort;
+    const p = new HomebridgeObisPowerConsumption(log, cfg, api);
+    expect((p as any).validateConfig()).toBe(false);
+  });
+
+  it('validateConfig returns false for whitespace-only serialPort', () => {
+    const cfg = { ...config, serialPort: '  \t  ' } as any;
+    const p = new HomebridgeObisPowerConsumption(log, cfg, api);
+    expect((p as any).validateConfig()).toBe(false);
+  });
+
+  it('validateConfig returns false for non-string serialPort', () => {
+    const cfg = { ...config, serialPort: 12345 as unknown as string } as any;
+    const p = new HomebridgeObisPowerConsumption(log, cfg, api);
+    expect((p as any).validateConfig()).toBe(false);
+  });
+
   it('handles invalid serial port during validation (init throws)', async () => {
     jest.spyOn(SmartMeterObis as any, 'init').mockImplementation(() => {
       throw new Error('open failed');
