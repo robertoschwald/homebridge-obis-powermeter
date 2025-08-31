@@ -52,7 +52,7 @@ Full example with options:
   "pollInterval": 60,
   "hidePowerConsumptionDevice": false,
   "hidePowerReturnDevice": true,
-  "debugLevel": 0
+  "debugLevel": 0,
   "_bridge": {
     "username": "0E:BF:63:D3:AB:01",
     "port": 48501
