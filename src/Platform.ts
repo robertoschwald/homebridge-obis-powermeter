@@ -112,7 +112,8 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
   }
 
   private validateConfig(): boolean {
-    return this.config.serialPort.length > 0;
+    const sp = (this.config as Partial<PluginConfig> | undefined)?.serialPort;
+    return typeof sp === 'string' && sp.trim().length > 0;
   }
 
   private obisOptions: ObisSerialOptions = {

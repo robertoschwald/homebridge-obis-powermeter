@@ -57,6 +57,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Test the project
+        run: npm test
+
       - name: Show npm pack file list (dry-run)
         run: npm pack --dry-run
 
