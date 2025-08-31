@@ -35,8 +35,7 @@ Use the Homebridge UI (recommended) or edit config.json. Platform name is OBIS.
 Minimal example:
 ```json
 {
-  "platform": "OBIS",
-  "serialPort": "/dev/ttyUSB0"
+  "platform": "OBIS"
 }
 ```
 
@@ -54,6 +53,10 @@ Full example with options:
   "hidePowerConsumptionDevice": false,
   "hidePowerReturnDevice": true,
   "debugLevel": 0
+  "_bridge": {
+    "username": "0E:BF:63:D3:AB:01",
+    "port": 48501
+  }
 }
 ```
 Notes:
