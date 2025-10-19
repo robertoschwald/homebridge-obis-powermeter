@@ -291,15 +291,18 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
     const powerConsumptionExistingAccessory = this.accessories.find(
       (accessory) => accessory.UUID === powerConsumptionUuid,
     );
+    let powerConsumptionAccessory: PlatformAccessory | undefined; // track for history initialization
 
     if (this.config.hidePowerConsumptionDevice !== true) {
       if (powerConsumptionExistingAccessory) {
+        powerConsumptionAccessory = powerConsumptionExistingAccessory;
         this.devices.push(
           new PowerConsumption(this.config, this.log, this.api, powerConsumptionExistingAccessory, this.device!),
         );
       } else {
         this.log.info(`${powerConsumptionName} added as accessory`);
         const accessory = new this.api.platformAccessory(powerConsumptionName, powerConsumptionUuid);
+        powerConsumptionAccessory = accessory;
         this.devices.push(new PowerConsumption(this.config, this.log, this.api, accessory, this.device!));
         this.api.registerPlatformAccessories(this.REGISTER_PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
       }
@@ -346,15 +349,16 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
       eImpAccessory = accessory;
     }
 
-    // Initialize Fakegato history if enabled and not yet created
+    // Initialize Fakegato history: prefer Power Consumption accessory so Eve shows history there; fallback to Energy Import
     if (this.config.enableFakegatoHistory !== false && !this.energyHistory) {
       try {
         const storagePath = (this.api as unknown as { user?: { storagePath?: () => string } }).user?.storagePath?.()
           || process.env.HOMEBRIDGE_STORAGE_PATH
           || process.env.HOME
           || '.';
-        this.energyHistory = new EnergyHistory(this.api, eImpAccessory, this.log, storagePath);
-        this.d('[OBIS] Fakegato energy history initialized.', 1);
+        const historyAccessory = powerConsumptionAccessory || eImpAccessory;
+        this.energyHistory = new EnergyHistory(this.api, historyAccessory, this.log, storagePath);
+        this.d(`[OBIS] Fakegato energy history initialized on '${historyAccessory.displayName}'.`, 1);
       } catch (e) {
         this.log.warn(`[OBIS] Failed to initialize Fakegato history: ${String(e)}`);
       }
@@ -459,16 +463,15 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
               device.beat(value);
             });
 
-            // Add to Fakegato history if enabled
+            // Add to Fakegato history if enabled (attach only to one accessory: power consumption preferred)
             try {
-              if (this.energyHistory && data) {
+              if (data && this.energyHistory) {
                 const energy = this.floatKwhOf((data as Record<string, ObisMeasurement>)['1-0:1.8.0*255']
                   ?? (data as Record<string, ObisMeasurement>)['1-0:1.8.0']);
-                const importPower = value > 0 ? value : 0;
+                const importPower = value > 0 ? value : 0; // only import power (ignore export for graph clarity)
                 if (Number.isFinite(importPower) && Number.isFinite(energy)) {
                   this.energyHistory.add(importPower, energy);
                 } else if (Number.isFinite(importPower)) {
-                  // still record power if energy unavailable
                   this.energyHistory.add(importPower, 0);
                 }
               }

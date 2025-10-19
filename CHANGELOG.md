@@ -6,12 +6,14 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Power history (Eve App) using Fakegato.
 - Homebridge 1.8.0 compatibility.
+- Stable LightSensor service subtypes for all accessories (migration logic keeps legacy services).
 
 ### Changed
-- None
+- Minor refactor in accessories to reuse existing LightSensor services when present.
 
 ### Fixed
-- None
+- Resolved Homebridge error: duplicate `CurrentAmbientLightLevel` characteristic (UUID 0000006B...) by preventing duplicate service/characteristic additions.
+- Fixed ESLint max-len warnings in `EnergyImport.ts` and `VoltageSensor.ts`.
 
 ## [1.0.2] - 2025-08-31
 ### Added

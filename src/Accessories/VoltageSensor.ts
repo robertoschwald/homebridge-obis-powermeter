@@ -13,6 +13,7 @@ export default class VoltageSensor implements HomebridgeObisDataAccessory {
   public Characteristic: typeof HbCharacteristic;
   private voltageService!: HbService;
   private readonly obisKey: string;
+  private readonly serialSuffix: string;
 
   constructor(
     _config: PlatformConfig,
@@ -25,13 +26,11 @@ export default class VoltageSensor implements HomebridgeObisDataAccessory {
     this.Service = this.api.hap.Service;
     this.Characteristic = this.api.hap.Characteristic;
     this.obisKey = opts.obisKey;
+    this.serialSuffix = opts.serialSuffix;
 
     try {
-      (this.accessory as unknown as { category?: number }).category =
-        this.api.hap.Categories.SENSOR;
-    } catch (_e) {
-      // noop: category not supported
-    }
+      (this.accessory as unknown as { category?: number }).category = this.api.hap.Categories.SENSOR;
+    } catch (_e) { /* noop */ }
 
     const info = this.accessory.getService(this.Service.AccessoryInformation);
     if (!info) {
@@ -40,18 +39,13 @@ export default class VoltageSensor implements HomebridgeObisDataAccessory {
     }
     info
       .setCharacteristic(this.Characteristic.Manufacturer, 'HomebridgeObis')
-      .setCharacteristic(
-        this.Characteristic.Model,
-        `${this.device.product_name} Voltage`,
-      )
-      .setCharacteristic(
-        this.Characteristic.SerialNumber,
-        `${this.device.serial}-${opts.serialSuffix}`,
-      );
+      .setCharacteristic(this.Characteristic.Model, `${this.device.product_name} Voltage`)
+      .setCharacteristic(this.Characteristic.SerialNumber, `${this.device.serial}-${opts.serialSuffix}`);
 
-    // Use LightSensor to display numeric value in most clients
-    this.voltageService = this.accessory.getService(this.Service.LightSensor)
-      || this.accessory.addService(this.Service.LightSensor, opts.name);
+    const subtype = `voltage-${this.serialSuffix}`;
+    const legacy = this.accessory.getService(this.Service.LightSensor);
+    const byId = this.accessory.getServiceById?.(this.Service.LightSensor, subtype);
+    this.voltageService = byId || legacy || this.accessory.addService(this.Service.LightSensor, opts.name, subtype);
   }
 
   private floatOf(m?: ObisMeasurement): number {
@@ -75,9 +69,7 @@ export default class VoltageSensor implements HomebridgeObisDataAccessory {
         getValues?: () => Array<{ value: number; unit?: string }>;
         values?: Array<{ value: number; unit?: string }>;
       };
-      const vals = typeof maybe.getValues === 'function'
-        ? maybe.getValues()
-        : maybe.values;
+      const vals = typeof maybe.getValues === 'function' ? maybe.getValues() : maybe.values;
       if (Array.isArray(vals) && vals.length > 0) {
         const first = vals[0];
         if (Number.isFinite(first?.value)) {
@@ -88,18 +80,13 @@ export default class VoltageSensor implements HomebridgeObisDataAccessory {
           return first.value;
         }
       }
-    } catch (_e) {
-      // noop: parse failure handled by returning NaN
-    }
+    } catch (_e) { /* noop */ }
     return NaN;
   }
 
   public beatWithData(data: Record<string, ObisMeasurement>): void {
     const v = this.floatOf(data[this.obisKey]);
-    const value = Number.isFinite(v) && v > 0 ? v : 0.0001; // HomeKit min
-    this.voltageService.setCharacteristic(
-      this.Characteristic.CurrentAmbientLightLevel,
-      value,
-    );
+    const value = Number.isFinite(v) && v > 0 ? v : 0.0001;
+    this.voltageService.setCharacteristic(this.Characteristic.CurrentAmbientLightLevel, value);
   }
 }
