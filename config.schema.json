@@ -123,11 +123,11 @@
       },
       "debugLevel": {
         "title": "Debug level",
-        "description": "Verbosity for smartmeter-obis logging (0=off, 1=info, 2=verbose). You can also set OBIS_DEBUG environment variable on the child bridge.",
+        "description": "Plugin log verbosity (0=off, 1=info, 2=verbose). Set to 3 to also enable underlying smartmeter-obis internal debug output.",
         "type": "number",
         "default": 0,
         "minimum": 0,
-        "maximum": 2
+        "maximum": 3
       }
     },
     "required": [

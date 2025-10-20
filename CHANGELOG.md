@@ -2,9 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.3] - 2025-09-07
+## [1.0.3-dev] - 2025-09-07
 ### Added
-- Power history (Eve App) using Fakegato.
+- Power and Voltage history (Eve App) using Fakegato.
 - Homebridge 1.8.0 compatibility.
 - Stable LightSensor service subtypes for all accessories (migration logic keeps legacy services).
 
