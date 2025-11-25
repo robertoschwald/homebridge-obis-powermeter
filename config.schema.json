@@ -19,14 +19,26 @@
         "type": "string",
         "default": "/dev/ttyUSB0"
       },
+      "enableFakegatoHistory": {
+        "title": "Enable Eve history (Fakegato)",
+        "type": "boolean",
+        "default": true,
+        "description": "If enabled, records power and energy samples to Eve App history."
+      },
       "protocol": {
         "title": "Protocol",
         "description": "Protocol parser to use for your meter (SmlProtocol or D0Protocol).",
         "type": "string",
         "default": "SmlProtocol",
         "oneOf": [
-          { "title": "SML", "const": "SmlProtocol" },
-          { "title": "D0 / IEC 62056-21", "const": "D0Protocol" }
+          {
+            "title": "SML",
+            "const": "SmlProtocol"
+          },
+          {
+            "title": "D0 / IEC 62056-21",
+            "const": "D0Protocol"
+          }
         ]
       },
       "serialBaudRate": {
@@ -39,10 +51,22 @@
         "type": "number",
         "default": 8,
         "oneOf": [
-          { "title": "5", "const": 5 },
-          { "title": "6", "const": 6 },
-          { "title": "7", "const": 7 },
-          { "title": "8", "const": 8 }
+          {
+            "title": "5",
+            "const": 5
+          },
+          {
+            "title": "6",
+            "const": 6
+          },
+          {
+            "title": "7",
+            "const": 7
+          },
+          {
+            "title": "8",
+            "const": 8
+          }
         ]
       },
       "serialStopBits": {
@@ -50,8 +74,14 @@
         "type": "number",
         "default": 1,
         "oneOf": [
-          { "title": "1", "const": 1 },
-          { "title": "2", "const": 2 }
+          {
+            "title": "1",
+            "const": 1
+          },
+          {
+            "title": "2",
+            "const": 2
+          }
         ]
       },
       "serialParity": {
@@ -59,9 +89,18 @@
         "type": "string",
         "default": "none",
         "oneOf": [
-          { "title": "None", "const": "none" },
-          { "title": "Even", "const": "even" },
-          { "title": "Odd", "const": "odd" }
+          {
+            "title": "None",
+            "const": "none"
+          },
+          {
+            "title": "Even",
+            "const": "even"
+          },
+          {
+            "title": "Odd",
+            "const": "odd"
+          }
         ]
       },
       "pollInterval": {
@@ -84,13 +123,15 @@
       },
       "debugLevel": {
         "title": "Debug level",
-        "description": "Verbosity for smartmeter-obis logging (0=off, 1=info, 2=verbose). You can also set OBIS_DEBUG environment variable on the child bridge.",
+        "description": "Plugin log verbosity (0=off, 1=info, 2=verbose). Set to 3 to also enable underlying smartmeter-obis internal debug output.",
         "type": "number",
         "default": 0,
         "minimum": 0,
-        "maximum": 2
+        "maximum": 3
       }
     },
-    "required": ["serialPort"]
+    "required": [
+      "serialPort"
+    ]
   }
 }

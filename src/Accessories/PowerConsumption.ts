@@ -26,8 +26,12 @@ export default class PowerConsumption implements HomebridgeObisPowerConsumptionA
       return;
     }
 
-    this.powerService = this.accessory.getService(this.Service.LightSensor)
-      || this.accessory.addService(this.Service.LightSensor);
+    // Use a stable subtype to avoid duplicate LightSensor service / characteristic errors
+    const subtype = 'power-consumption';
+    // Migration logic: if a legacy LightSensor service exists without subtype, reuse it
+    const legacy = this.accessory.getService(this.Service.LightSensor);
+    const byId = this.accessory.getServiceById?.(this.Service.LightSensor, subtype);
+    this.powerService = byId || legacy || this.accessory.addService(this.Service.LightSensor, 'Power Consumption', subtype);
 
     const info = accessory.getService(this.Service.AccessoryInformation);
     if (!info) {

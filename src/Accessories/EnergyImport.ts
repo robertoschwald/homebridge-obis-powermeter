@@ -19,11 +19,8 @@ export default class EnergyImport implements HomebridgeObisDataAccessory {
     this.Characteristic = this.api.hap.Characteristic;
 
     try {
-      (this.accessory as unknown as { category?: number }).category =
-        this.api.hap.Categories.SENSOR;
-    } catch (_e) {
-      // noop: category not supported
-    }
+      (this.accessory as unknown as { category?: number }).category = this.api.hap.Categories.SENSOR;
+    } catch (_e) { /* noop */ }
 
     const info = this.accessory.getService(this.api.hap.Service.AccessoryInformation);
     if (!info) {
@@ -32,19 +29,14 @@ export default class EnergyImport implements HomebridgeObisDataAccessory {
     }
     info
       .setCharacteristic(this.api.hap.Characteristic.Manufacturer, 'HomebridgeObis')
-      .setCharacteristic(
-        this.api.hap.Characteristic.Model,
-        `${this.device.product_name} Energy Import`,
-      )
-      .setCharacteristic(
-        this.api.hap.Characteristic.SerialNumber,
-        `${this.device.serial}-energy-import-kwh`,
-      );
+      .setCharacteristic(this.api.hap.Characteristic.Model, `${this.device.product_name} Energy Import`)
+      .setCharacteristic(this.api.hap.Characteristic.SerialNumber, `${this.device.serial}-energy-import-kwh`);
 
-    // Use LightSensor for numeric display; most clients render a sensor tile with value
     const name = 'Energy Import';
-    this.svc = this.accessory.getService(this.api.hap.Service.LightSensor)
-      || this.accessory.addService(this.api.hap.Service.LightSensor, name);
+    const subtype = 'energy-import';
+    const legacy = this.accessory.getService(this.api.hap.Service.LightSensor);
+    const byId = this.accessory.getServiceById?.(this.api.hap.Service.LightSensor, subtype);
+    this.svc = byId || legacy || this.accessory.addService(this.api.hap.Service.LightSensor, name, subtype);
   }
 
   private floatKwh(m?: ObisMeasurement): number {
@@ -58,7 +50,6 @@ export default class EnergyImport implements HomebridgeObisDataAccessory {
         if (match) {
           let v = Number(match[0].replace(',', '.'));
           const unit = s.toLowerCase();
-          // Expect kWh, but also handle Wh
           if (unit.includes('wh') && !unit.includes('kwh')) {
             v = v / 1000;
           }
@@ -69,9 +60,7 @@ export default class EnergyImport implements HomebridgeObisDataAccessory {
         getValues?: () => Array<{ value: number; unit?: string }>;
         values?: Array<{ value: number; unit?: string }>;
       };
-      const vals = typeof maybe.getValues === 'function'
-        ? maybe.getValues()
-        : maybe.values;
+      const vals = typeof maybe.getValues === 'function' ? maybe.getValues() : maybe.values;
       if (Array.isArray(vals) && vals.length > 0) {
         const first = vals[0];
         if (Number.isFinite(first?.value)) {
@@ -83,7 +72,7 @@ export default class EnergyImport implements HomebridgeObisDataAccessory {
         }
       }
     } catch (_e) {
-      // noop: parse failure handled by returning NaN
+      // noop
     }
     return NaN;
   }
@@ -97,14 +86,10 @@ export default class EnergyImport implements HomebridgeObisDataAccessory {
       }
     }
     const v = this.floatKwh(m);
-    // HomeKit LightSensor requires >= 0.0001 and <= 100000. Clamp safely.
     let value = Number.isFinite(v) && v > 0 ? v : 0.0001;
     if (value > 100000) {
       value = 100000;
     }
-    this.svc.setCharacteristic(
-      this.api.hap.Characteristic.CurrentAmbientLightLevel,
-      value,
-    );
+    this.svc.setCharacteristic(this.api.hap.Characteristic.CurrentAmbientLightLevel, value);
   }
 }

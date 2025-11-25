@@ -1,7 +1,7 @@
 {
   "name": "homebridge-obis-powermeter",
   "displayName": "Homebridge OBIS Powermeter",
-  "version": "1.0.2",
+  "version": "1.0.3-dev",
   "description": "Plugin for OBIS smart meter devices (SML/D0) to read power, energy, and voltages.",
   "license": "Apache-2.0",
   "author": "Robert Oschwald <robertoschwald@users.noreply.github.com>",
@@ -28,6 +28,7 @@
   ],
   "scripts": {
     "lint": "eslint 'src/**/*.ts'",
+    "obis-reformat": "eslint 'src/**/*.ts' --fix",
     "watch": "npm run build && npm link && nodemon",
     "build": "rimraf ./dist && tsc",
     "package": "npm run build && node -p \"'homebridge-obis-powermeter-' + require('./package.json').version + '.zip'\" | xargs -I {} zip -r {} dist/ package.json README.md LICENSE config.schema.json",
@@ -66,7 +67,8 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
-    "axios": "^1.6.7",
+    "axios": "^1.12.2",
+    "fakegato-history": "^0.6.7",
     "serialport": "^12.0.0",
     "smartmeter-obis": "^4.0.0",
     "ws": "^8.17.1"

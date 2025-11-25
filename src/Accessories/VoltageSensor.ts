@@ -1,6 +1,7 @@
 import { API, Logger, PlatformAccessory, PlatformConfig, Service as HbService, Characteristic as HbCharacteristic } from 'homebridge';
 import type { ObisMeasurement } from 'smartmeter-obis';
 import { HomebridgeObisDataAccessory, HomebridgeObisDevice } from '../PlatformTypes';
+import { VoltageHistory } from './VoltageHistory';
 
 interface VoltageOptions {
   obisKey: string;
@@ -13,6 +14,9 @@ export default class VoltageSensor implements HomebridgeObisDataAccessory {
   public Characteristic: typeof HbCharacteristic;
   private voltageService!: HbService;
   private readonly obisKey: string;
+  private readonly serialSuffix: string;
+  private voltageHistory?: VoltageHistory; // Fakegato voltage history
+  private readonly cfg: PlatformConfig; // store config
 
   constructor(
     _config: PlatformConfig,
@@ -22,36 +26,44 @@ export default class VoltageSensor implements HomebridgeObisDataAccessory {
     public device: HomebridgeObisDevice,
     opts: VoltageOptions,
   ) {
+    this.cfg = _config;
     this.Service = this.api.hap.Service;
     this.Characteristic = this.api.hap.Characteristic;
     this.obisKey = opts.obisKey;
+    this.serialSuffix = opts.serialSuffix;
 
     try {
-      (this.accessory as unknown as { category?: number }).category =
-        this.api.hap.Categories.SENSOR;
-    } catch (_e) {
-      // noop: category not supported
-    }
+      (this.accessory as unknown as { category?: number }).category = this.api.hap.Categories.SENSOR;
+    } catch (_e) { /* noop */ }
 
-    const info = this.accessory.getService(this.Service.AccessoryInformation);
-    if (!info) {
-      log.error('No service accessory provided');
+    const accessoryInformation = this.accessory.getService(this.Service.AccessoryInformation);
+    if (!accessoryInformation) {
+      log.error('No service accessoryInformation provided');
       return;
     }
-    info
+    accessoryInformation
       .setCharacteristic(this.Characteristic.Manufacturer, 'HomebridgeObis')
-      .setCharacteristic(
-        this.Characteristic.Model,
-        `${this.device.product_name} Voltage`,
-      )
-      .setCharacteristic(
-        this.Characteristic.SerialNumber,
-        `${this.device.serial}-${opts.serialSuffix}`,
-      );
+      .setCharacteristic(this.Characteristic.Model, `${this.device.product_name} Voltage`)
+      .setCharacteristic(this.Characteristic.SerialNumber, `${this.device.serial}-${opts.serialSuffix}`);
 
-    // Use LightSensor to display numeric value in most clients
-    this.voltageService = this.accessory.getService(this.Service.LightSensor)
-      || this.accessory.addService(this.Service.LightSensor, opts.name);
+    const subtype = `voltage-${this.serialSuffix}`;
+    const legacy = this.accessory.getService(this.Service.LightSensor);
+    const byId = this.accessory.getServiceById?.(this.Service.LightSensor, subtype);
+    this.voltageService = byId || legacy || this.accessory.addService(this.Service.LightSensor, opts.name, subtype);
+
+    // Initialize Fakegato voltage history if enabled
+    if ((this.cfg as unknown as { enableFakegatoHistory?: boolean }).enableFakegatoHistory) {
+      try {
+        const storagePath = (this.api as unknown as { user?: { storagePath?: () => string } }).user?.storagePath?.()
+          || process.env.HOMEBRIDGE_STORAGE_PATH
+          || process.env.HOME
+          || '.';
+        this.voltageHistory = new VoltageHistory(this.api, this.accessory, this.log, storagePath, 10);
+        this.log.debug?.(`Voltage history active for ${opts.name}`);
+      } catch (e) {
+        this.log.debug?.(`Voltage history init failed for ${opts.name}: ${String(e)}`);
+      }
+    }
   }
 
   private floatOf(m?: ObisMeasurement): number {
@@ -66,7 +78,7 @@ export default class VoltageSensor implements HomebridgeObisDataAccessory {
           let v = Number(match[0].replace(',', '.'));
           const unit = s.toLowerCase();
           if (unit.includes('kv')) {
-            v = v * 1000;
+            v = v * 1000; // convert kV -> V
           }
           return v;
         }
@@ -88,18 +100,16 @@ export default class VoltageSensor implements HomebridgeObisDataAccessory {
           return first.value;
         }
       }
-    } catch (_e) {
-      // noop: parse failure handled by returning NaN
-    }
+    } catch (_e) { /* noop */ }
     return NaN;
   }
 
   public beatWithData(data: Record<string, ObisMeasurement>): void {
     const v = this.floatOf(data[this.obisKey]);
     const value = Number.isFinite(v) && v > 0 ? v : 0.0001; // HomeKit min
-    this.voltageService.setCharacteristic(
-      this.Characteristic.CurrentAmbientLightLevel,
-      value,
-    );
+    this.voltageService.setCharacteristic(this.Characteristic.CurrentAmbientLightLevel, value);
+    if (this.voltageHistory && Number.isFinite(v) && v > 0) {
+      this.voltageHistory.add(v);
+    }
   }
 }

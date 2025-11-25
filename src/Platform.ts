@@ -42,6 +42,8 @@ import PowerReturn from './Accessories/PowerReturn';
 import VoltageSensor from './Accessories/VoltageSensor';
 import type { HomebridgeObisDataAccessory } from './PlatformTypes';
 import EnergyImport from './Accessories/EnergyImport';
+import { EnergyHistory } from './Accessories/EnergyHistory';
+import { VoltageHistory } from './Accessories/VoltageHistory';
 
 interface PluginConfig extends PlatformConfig {
     pollInterval?: number;
@@ -53,6 +55,7 @@ interface PluginConfig extends PlatformConfig {
     serialParity?: 'none' | 'even' | 'odd';
     hidePowerConsumptionDevice?: boolean;
     hidePowerReturnDevice?: boolean;
+    enableFakegatoHistory?: boolean;
     debugLevel?: number; // optional extra logging for smartmeter-obis
 }
 
@@ -62,6 +65,8 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
   public Service: unknown;
   public Characteristic: unknown;
   public readonly accessories: PlatformAccessory[] = [];
+  // add internal plugin debug level separate from underlying library
+  private pluginDebugLevel: 0 | 1 | 2 | 3 = 0;
 
   private readonly heartBeatInterval: number;
   private readonly REGISTER_PLUGIN_NAME = 'homebridge-obis-powermeter';
@@ -72,10 +77,12 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
   private dataDevices: HomebridgeObisDataAccessory[] = [];
   private device: HomebridgeObisDevice | null = null;
   private hbTimer?: NodeJS.Timeout;
+  private energyHistory?: EnergyHistory;
+  private voltageHistories: Array<{ obisKey: string; history: VoltageHistory }> = [];
 
   // prefer warn when plugin debugLevel is enabled so logs are visible even if child-bridge log level is warn
   private d(msg: string, level = 1) {
-    const dl = Number(this.obisOptions.debug ?? 0);
+    const dl = this.pluginDebugLevel;
     if (dl >= level) {
       this.log.warn(msg);
     } else {
@@ -92,15 +99,14 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
     this.Characteristic = this.api.hap.Characteristic;
     this.heartBeatInterval = (this.config.pollInterval || 60) * 1000;
 
-    // Configure debug level from config or env (OBIS_DEBUG). Coerce strings -> numbers and clamp 0..2.
-    const envRaw = process.env.OBIS_DEBUG;
-    const envNum = envRaw !== undefined && envRaw !== '' ? Number(envRaw) : NaN;
-    const cfgNum = Number(this.config.debugLevel ?? NaN);
-    const base = (Number.isFinite(envNum) && envNum >= 0)
-      ? envNum
-      : (Number.isFinite(cfgNum) && cfgNum >= 0 ? cfgNum : 0);
-    const dbg: 0 | 1 | 2 = (base <= 0 ? 0 : base >= 2 ? 2 : 1);
-    this.obisOptions.debug = dbg;
+    // Determine plugin debug level directly from config (0..3). Only level 3 enables underlying smartmeter-obis debug.
+    const cfgRaw = Number(this.config.debugLevel ?? 0);
+    this.pluginDebugLevel = (Number.isFinite(cfgRaw) && cfgRaw >= 0 && cfgRaw <= 3) ? (cfgRaw as 0|1|2|3) : 0;
+    if (this.pluginDebugLevel === 3) {
+      this.obisOptions.debug = 1;
+    } else {
+      this.obisOptions.debug = 0;
+    }
 
     this.api.on('didFinishLaunching', () => {
       this.initialize();
@@ -169,7 +175,7 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
             this.d(`[OBIS] Serial device exists. Mode: ${stat.mode.toString(8)} Size: ${stat.size}`, 2);
           }
         } catch (e) {
-          this.d(`[OBIS] FS check failed for serial device: ${String(e)}`, 2);
+          this.d(`[OBIS] FS check failed for serial device: ${String(e)}`, 0);
         }
 
         // Log validation parameters split across lines to satisfy max-len
@@ -184,8 +190,8 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
           + `stopBits=${this.config.serialStopBits ?? ''}, `
           + `parity=${this.config.serialParity ?? ''}`
           + ')';
-        this.log.debug(logHeader);
-        this.log.debug(logDetails);
+        this.d(logHeader, 1);
+        this.d(logDetails, 3);
 
         const summarize = (data?: Record<string, ObisMeasurement>) => {
           const keys = data ? Object.keys(data) : [];
@@ -210,7 +216,7 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
             }
 
             try {
-              this.d(`[OBIS] validate callback data: ${summarize(data)}`, 2);
+              this.d(`[OBIS] validate callback data: ${summarize(data)}`, 3);
               const hasAnyData = data && Object.keys(data).length > 0;
               if (hasAnyData) {
                 const getStr = (k: string) => data?.[k]?.valueToString?.();
@@ -288,15 +294,18 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
     const powerConsumptionExistingAccessory = this.accessories.find(
       (accessory) => accessory.UUID === powerConsumptionUuid,
     );
+    let powerConsumptionAccessory: PlatformAccessory | undefined; // track for history initialization
 
     if (this.config.hidePowerConsumptionDevice !== true) {
       if (powerConsumptionExistingAccessory) {
+        powerConsumptionAccessory = powerConsumptionExistingAccessory;
         this.devices.push(
           new PowerConsumption(this.config, this.log, this.api, powerConsumptionExistingAccessory, this.device!),
         );
       } else {
         this.log.info(`${powerConsumptionName} added as accessory`);
         const accessory = new this.api.platformAccessory(powerConsumptionName, powerConsumptionUuid);
+        powerConsumptionAccessory = accessory;
         this.devices.push(new PowerConsumption(this.config, this.log, this.api, accessory, this.device!));
         this.api.registerPlatformAccessories(this.REGISTER_PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
       }
@@ -331,64 +340,103 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
     const eImpName = 'Energy Import';
     const eImpUuid = this.api.hap.uuid.generate(`${this.UUID_NAMESPACE}:energy-import`);
     const eImpExisting = this.accessories.find(a => a.UUID === eImpUuid);
+    let eImpAccessory: PlatformAccessory;
     if (eImpExisting) {
       this.dataDevices.push(new EnergyImport(this.config, this.log, this.api, eImpExisting, this.device!));
+      eImpAccessory = eImpExisting;
     } else {
       this.log.info(`${eImpName} added as accessory`);
       const accessory = new this.api.platformAccessory(eImpName, eImpUuid);
       this.dataDevices.push(new EnergyImport(this.config, this.log, this.api, accessory, this.device!));
       this.api.registerPlatformAccessories(this.REGISTER_PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
+      eImpAccessory = accessory;
+    }
+
+    // Initialize Fakegato history: prefer Power Consumption accessory so Eve shows history there; fallback to Energy Import
+    if (this.config.enableFakegatoHistory !== false && !this.energyHistory) {
+      try {
+        const storagePath = (this.api as unknown as { user?: { storagePath?: () => string } }).user?.storagePath?.()
+          || process.env.HOMEBRIDGE_STORAGE_PATH
+          || process.env.HOME
+          || '.';
+        const historyAccessory = powerConsumptionAccessory || eImpAccessory;
+        this.energyHistory = new EnergyHistory(this.api, historyAccessory, this.log, storagePath);
+        this.d(`[OBIS] Fakegato energy history initialized on '${historyAccessory.displayName}'.`, 1);
+      } catch (e) {
+        this.log.warn(`[OBIS] Failed to initialize Fakegato history: ${String(e)}`);
+      }
     }
 
     // Voltage L1
     const v1Name = 'Voltage L1';
     const v1Uuid = this.api.hap.uuid.generate(`${this.UUID_NAMESPACE}:voltage-l1`);
     const v1Existing = this.accessories.find(a => a.UUID === v1Uuid);
+    const v1Obis = '1-0:32.7.0*255';
     if (v1Existing) {
       this.dataDevices.push(new VoltageSensor(this.config, this.log, this.api, v1Existing, this.device!, {
-        obisKey: '1-0:32.7.0*255', name: v1Name, serialSuffix: 'voltage-l1',
+        obisKey: v1Obis, name: v1Name, serialSuffix: 'voltage-l1',
       }));
+      if (this.config.enableFakegatoHistory !== false) {
+        this.initVoltageHistory(v1Obis, v1Existing);
+      }
     } else {
       this.log.info(`${v1Name} added as accessory`);
       const accessory = new this.api.platformAccessory(v1Name, v1Uuid);
       this.dataDevices.push(new VoltageSensor(this.config, this.log, this.api, accessory, this.device!, {
-        obisKey: '1-0:32.7.0*255', name: v1Name, serialSuffix: 'voltage-l1',
+        obisKey: v1Obis, name: v1Name, serialSuffix: 'voltage-l1',
       }));
       this.api.registerPlatformAccessories(this.REGISTER_PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
+      if (this.config.enableFakegatoHistory !== false) {
+        this.initVoltageHistory(v1Obis, accessory);
+      }
     }
 
     // Voltage L2
     const v2Name = 'Voltage L2';
     const v2Uuid = this.api.hap.uuid.generate(`${this.UUID_NAMESPACE}:voltage-l2`);
     const v2Existing = this.accessories.find(a => a.UUID === v2Uuid);
+    const v2Obis = '1-0:52.7.0*255';
     if (v2Existing) {
       this.dataDevices.push(new VoltageSensor(this.config, this.log, this.api, v2Existing, this.device!, {
-        obisKey: '1-0:52.7.0*255', name: v2Name, serialSuffix: 'voltage-l2',
+        obisKey: v2Obis, name: v2Name, serialSuffix: 'voltage-l2',
       }));
+      if (this.config.enableFakegatoHistory !== false) {
+        this.initVoltageHistory(v2Obis, v2Existing);
+      }
     } else {
       this.log.info(`${v2Name} added as accessory`);
       const accessory = new this.api.platformAccessory(v2Name, v2Uuid);
       this.dataDevices.push(new VoltageSensor(this.config, this.log, this.api, accessory, this.device!, {
-        obisKey: '1-0:52.7.0*255', name: v2Name, serialSuffix: 'voltage-l2',
+        obisKey: v2Obis, name: v2Name, serialSuffix: 'voltage-l2',
       }));
       this.api.registerPlatformAccessories(this.REGISTER_PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
+      if (this.config.enableFakegatoHistory !== false) {
+        this.initVoltageHistory(v2Obis, accessory);
+      }
     }
 
     // Voltage L3
     const v3Name = 'Voltage L3';
     const v3Uuid = this.api.hap.uuid.generate(`${this.UUID_NAMESPACE}:voltage-l3`);
     const v3Existing = this.accessories.find(a => a.UUID === v3Uuid);
+    const v3Obis = '1-0:72.7.0*255';
     if (v3Existing) {
       this.dataDevices.push(new VoltageSensor(this.config, this.log, this.api, v3Existing, this.device!, {
-        obisKey: '1-0:72.7.0*255', name: v3Name, serialSuffix: 'voltage-l3',
+        obisKey: v3Obis, name: v3Name, serialSuffix: 'voltage-l3',
       }));
+      if (this.config.enableFakegatoHistory !== false) {
+        this.initVoltageHistory(v3Obis, v3Existing);
+      }
     } else {
       this.log.info(`${v3Name} added as accessory`);
       const accessory = new this.api.platformAccessory(v3Name, v3Uuid);
       this.dataDevices.push(new VoltageSensor(this.config, this.log, this.api, accessory, this.device!, {
-        obisKey: '1-0:72.7.0*255', name: v3Name, serialSuffix: 'voltage-l3',
+        obisKey: v3Obis, name: v3Name, serialSuffix: 'voltage-l3',
       }));
       this.api.registerPlatformAccessories(this.REGISTER_PLUGIN_NAME, this.PLATFORM_NAME, [accessory]);
+      if (this.config.enableFakegatoHistory !== false) {
+        this.initVoltageHistory(v3Obis, accessory);
+      }
     }
   }
 
@@ -419,11 +467,21 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
           }
 
           try {
-            this.d(`[OBIS] Heartbeat data: ${summarize(data)}`, 2);
+            this.d(`[OBIS] Heartbeat data: ${summarize(data)}`, 3);
             // update voltage sensors first (does not depend on power)
             try {
               if (data) {
                 this.dataDevices.forEach(d => d.beatWithData(data as Record<string, ObisMeasurement>));
+                // add voltage history samples centrally
+                if (this.config.enableFakegatoHistory !== false && this.voltageHistories.length) {
+                  this.voltageHistories.forEach(vh => {
+                    const meas = (data as Record<string, ObisMeasurement>)[vh.obisKey];
+                    const val = this.parseVoltage(meas);
+                    if (Number.isFinite(val) && val > 0) {
+                      vh.history.add(val);
+                    }
+                  });
+                }
               }
             } catch (e) {
               this.d(`[OBIS] Voltage update failed: ${String(e)}`, 1);
@@ -438,6 +496,22 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
             this.devices.forEach((device: HomebridgeObisPowerConsumptionAccessory) => {
               device.beat(value);
             });
+
+            // Add to Fakegato history if enabled (attach only to one accessory: power consumption preferred)
+            try {
+              if (data && this.energyHistory) {
+                const energy = this.floatKwhOf((data as Record<string, ObisMeasurement>)['1-0:1.8.0*255']
+                  ?? (data as Record<string, ObisMeasurement>)['1-0:1.8.0']);
+                const importPower = value > 0 ? value : 0; // only import power (ignore export for graph clarity)
+                if (Number.isFinite(importPower) && Number.isFinite(energy)) {
+                  this.energyHistory.add(importPower, energy);
+                } else if (Number.isFinite(importPower)) {
+                  this.energyHistory.add(importPower, 0);
+                }
+              }
+            } catch (e) {
+              this.d(`[OBIS] Failed to add history sample: ${String(e)}`, 1);
+            }
 
             this.d(`[OBIS] Heartbeat value=${value} (src=${src})`, 1);
             smTransport.stop?.();
@@ -514,6 +588,43 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
     return NaN;
   }
 
+  private floatKwhOf(m?: ObisMeasurement): number {
+    if (!m) {
+      return NaN;
+    }
+    try {
+      if (typeof m.valueToString === 'function') {
+        const s = String(m.valueToString());
+        const match = s.match(/-?\d+(?:[.,]\d+)?/);
+        if (match) {
+          let v = Number(match[0].replace(',', '.'));
+          const unit = s.toLowerCase();
+          if (unit.includes('wh') && !unit.includes('kwh')) {
+            v = v / 1000;
+          }
+          return v;
+        }
+      }
+      type V = { value: number; unit?: string };
+      type MaybeValues = { getValues?: () => V[]; values?: V[] };
+      const mv: MaybeValues = m as unknown as MaybeValues;
+      const vals = typeof mv.getValues === 'function' ? mv.getValues() : mv.values;
+      if (Array.isArray(vals) && vals.length > 0) {
+        const first = vals[0];
+        if (Number.isFinite(first?.value)) {
+          const u = String(first.unit || '').toLowerCase();
+          if (u.includes('wh') && !u.includes('kwh')) {
+            return first.value / 1000;
+          }
+          return first.value;
+        }
+      }
+    } catch (_e) {
+      // ignore parse errors
+    }
+    return NaN;
+  }
+
   private computeActivePower(data?: Record<string, ObisMeasurement>): { value: number; src: string } {
     if (!data) {
       return { value: NaN, src: 'none' };
@@ -539,15 +650,19 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
     let imp = NaN; let exp = NaN;
     for (const k of importCandidates) {
       if (has(k)) {
-        const v = get(k); if (Number.isFinite(v)) {
-          imp = v; break;
+        const v = get(k);
+        if (Number.isFinite(v)) {
+          imp = v;
+          break;
         }
       }
     }
     for (const k of exportCandidates) {
       if (has(k)) {
-        const v = get(k); if (Number.isFinite(v)) {
-          exp = v; break;
+        const v = get(k);
+        if (Number.isFinite(v)) {
+          exp = v;
+          break;
         }
       }
     }
@@ -558,8 +673,14 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
     }
 
     // 3) Per-phase import/export sums
-    const phaseImport = ['1-0:21.7.0*255', '1-0:41.7.0*255', '1-0:61.7.0*255', '1-0:21.7.0', '1-0:41.7.0', '1-0:61.7.0'];
-    const phaseExport = ['1-0:22.7.0*255', '1-0:42.7.0*255', '1-0:62.7.0*255', '1-0:22.7.0', '1-0:42.7.0', '1-0:62.7.0'];
+    const phaseImport = [
+      '1-0:21.7.0*255', '1-0:41.7.0*255', '1-0:61.7.0*255',
+      '1-0:21.7.0', '1-0:41.7.0', '1-0:61.7.0',
+    ];
+    const phaseExport = [
+      '1-0:22.7.0*255', '1-0:42.7.0*255', '1-0:62.7.0*255',
+      '1-0:22.7.0', '1-0:42.7.0', '1-0:62.7.0',
+    ];
     const sumKeys = (keys: string[]) => keys.reduce((acc, k) => acc + (Number.isFinite(get(k)) ? get(k) : 0), 0);
     const impSum = sumKeys(phaseImport);
     const expSum = sumKeys(phaseExport);
@@ -568,12 +689,64 @@ export class HomebridgeObisPowerConsumption implements DynamicPlatformPlugin {
     }
 
     // 4) Fallback: some meters expose L1/L2/L3 instantaneous as 36/56/76
-    const phaseAlt = ['1-0:36.7.0*255', '1-0:56.7.0*255', '1-0:76.7.0*255', '1-0:36.7.0', '1-0:56.7.0', '1-0:76.7.0'];
+    const phaseAlt = [
+      '1-0:36.7.0*255', '1-0:56.7.0*255', '1-0:76.7.0*255',
+      '1-0:36.7.0', '1-0:56.7.0', '1-0:76.7.0',
+    ];
     const altSum = sumKeys(phaseAlt);
     if (altSum !== 0) {
       return { value: altSum, src: 'phases-sum-alt' };
     }
 
     return { value: NaN, src: 'not-found' };
+  }
+
+  private initVoltageHistory(obisKey: string, accessory: PlatformAccessory) {
+    try {
+      const storagePath = (this.api as unknown as { user?: { storagePath?: () => string } }).user?.storagePath?.()
+        || process.env.HOMEBRIDGE_STORAGE_PATH
+        || process.env.HOME
+        || '.';
+      const vh = new VoltageHistory(this.api, accessory, this.log, storagePath, 10);
+      this.voltageHistories.push({ obisKey, history: vh });
+      this.d(`[OBIS] Voltage history initialized for ${accessory.displayName} (${obisKey}).`, 2);
+    } catch (e) {
+      this.d(`[OBIS] Failed to init voltage history for ${accessory.displayName}: ${String(e)}`, 1);
+    }
+  }
+
+  private parseVoltage(m?: ObisMeasurement): number {
+    if (!m) {
+      return NaN;
+    }
+    try {
+      if (typeof m.valueToString === 'function') {
+        const s = String(m.valueToString());
+        const match = s.match(/-?\d+(?:[.,]\d+)?/);
+        if (match) {
+          let v = Number(match[0].replace(',', '.'));
+          const unit = s.toLowerCase();
+          if (unit.includes('kv')) {
+            v *= 1000;
+          }
+          return v;
+        }
+      }
+      const maybe = m as unknown as {
+        getValues?: () => Array<{ value: number; unit?: string }>;
+        values?: Array<{ value: number; unit?: string }>;
+      };
+      const vals = typeof maybe.getValues === 'function'
+        ? maybe.getValues()
+        : maybe.values;
+      if (Array.isArray(vals) && vals.length) {
+        const first = vals[0];
+        if (Number.isFinite(first?.value)) {
+          const u = String(first.unit || '').toLowerCase();
+          return u.includes('kv') ? first.value * 1000 : first.value;
+        }
+      }
+    } catch (_e) { /* ignore */ }
+    return NaN;
   }
 }

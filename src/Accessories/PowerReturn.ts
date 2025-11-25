@@ -37,8 +37,11 @@ export default class PowerReturn implements HomebridgeObisPowerConsumptionAccess
         `${device.serial}-power-return`,
       );
 
-    this.powerService = this.accessory.getService(this.Service.LightSensor)
-      || this.accessory.addService(this.Service.LightSensor);
+    // Use a stable subtype for the LightSensor service
+    const subtype = 'power-return';
+    const legacy = this.accessory.getService(this.Service.LightSensor);
+    const byId = this.accessory.getServiceById?.(this.Service.LightSensor, subtype);
+    this.powerService = byId || legacy || this.accessory.addService(this.Service.LightSensor, 'Power Return', subtype);
   }
 
   public beat(consumption: number) {
