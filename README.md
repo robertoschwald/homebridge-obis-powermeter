@@ -3,6 +3,9 @@
 [![npm downloads](https://img.shields.io/npm/dm/homebridge-obis-powermeter)](https://www.npmjs.com/package/homebridge-obis-powermeter)
 [![GitHub release](https://img.shields.io/github/v/release/robertoschwald/homebridge-obis-powermeter?display_name=tag&sort=semver)](https://github.com/robertoschwald/homebridge-obis-powermeter/releases)
 
+# Open for adoption
+Since I switched to HomeAssistant, this project is open for adoption.
+
 # Homebridge OBIS Powermeter
 
 A Homebridge plugin to read OBIS smart meter values.
